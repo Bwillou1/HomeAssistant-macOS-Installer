@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<installer-script minSpecVersion="1.000000">
+    <title>Home Assistant Desktop for macOS</title>
+    <options customize="never" allow-external-scripts="true" rootVolumeOnly="true"/>
+    
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    
+    <installation-check script="installation_check()"/>
+    
+    <script>
+        <![CDATA[
+        function installation_check() {
+            // Vérification version macOS minimum
+            if (system.compareVersions(system.version.ProductVersion, '12.0') < 0) {
+                my.result.title = 'Version macOS incompatible';
+                my.result.message = 'Home Assistant Desktop nécessite macOS 12.0 ou supérieur.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            
+            // Vérification architecture
+            var arch = system.hardware.architecture;
+            if (arch != 'x86_64' && arch != 'arm64') {
+                my.result.title = 'Architecture non supportée';
+                my.result.message = 'Home Assistant Desktop supporte uniquement Intel x86_64 et Apple Silicon.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            
+            // Vérification espace disque
+            var freeSpace = system.files.freeSpace('/');
+            if (freeSpace < 2147483648) { /* 2GB */
+                my.result.title = 'Espace disque insuffisant';
+                my.result.message = 'Home Assistant Desktop nécessite au moins 2GB d\'espace libre.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            
+            return true;
+        }
+        ]]>
+    </script>
+    
+    <welcome file="welcome.html"/>
+    <conclusion file="conclusion.html"/>
+    <license file="license.txt"/>
+    
+    <choices-outline>
+        <line choice="homeassistant"/>
+    </choices-outline>
+    
+    <choice id="homeassistant" title="Home Assistant Desktop" description="Installation complète de Home Assistant Desktop pour macOS">
+        <pkg-ref id="org.homeassistant.desktop"/>
+    </choice>
+    
+    <pkg-ref id="org.homeassistant.desktop" version="1.0.0" onConclusion="none">
+        <payload installKBytes="60000"/>
+        <bundle-version>
+            <bundle id="org.homeassistant.desktop" CFBundleShortVersionString="1.0.0" CFBundleVersion="1.0.0"/>
+        </bundle-version>
+        <scripts>
+            <preinstall file="preinstall"/>
+            <postinstall file="postinstall"/>
+        </scripts>
+    </pkg-ref>
+    
+    <background file="background.png" alignment="center" scaling="proportional"/>
+    
+    <volume-check script="volume_check()"/>
+    
+    <script>
+        <![CDATA[
+        function volume_check(volume) {
+            // Vérification que l'installation se fait sur le volume système
+            if (volume.mountpoint != '/') {
+                my.result.title = 'Volume incorrect';
+                my.result.message = 'Home Assistant Desktop doit être installé sur le volume système.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            return true;
+        }
+        ]]>
+    </script>
+</installer-script>

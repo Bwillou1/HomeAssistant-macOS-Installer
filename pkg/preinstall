@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# Home Assistant Desktop for macOS - Pre-installation script
+# Vérifications système et arrêt service existant
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+HA_CONFIG_DIR="/Library/Application Support/HomeAssistant"
+HA_LOG_DIR="/Library/Logs/HomeAssistant"
+
+# Fonctions de logging
+log_info() {
+    echo "[INFO] $1" >&2
+}
+
+log_error() {
+    echo "[ERROR] $1" >&2
+}
+
+log_info "Pré-installation Home Assistant Desktop for macOS"
+
+# 1. Vérification version macOS
+log_info "Vérification version macOS..."
+MACOS_VERSION=$(sw_vers -productVersion)
+MACOS_MAJOR=$(echo "$MACOS_VERSION" | cut -d. -f1)
+
+if [ "$MACOS_MAJOR" -lt 12 ]; then
+    log_error "macOS 12.0+ requis. Version actuelle: $MACOS_VERSION"
+    exit 1
+fi
+
+log_info "Version macOS compatible: $MACOS_VERSION"
+
+# 2. Vérification architecture
+log_info "Vérification architecture système..."
+ARCH=$(uname -m)
+if [ "$ARCH" = "arm64" ]; then
+    log_info "Architecture Apple Silicon détectée"
+elif [ "$ARCH" = "x86_64" ]; then
+    log_info "Architecture Intel détectée"
+else
+    log_error "Architecture non supportée: $ARCH"
+    exit 1
+fi
+
+# 3. Vérification espace disque
+log_info "Vérification espace disque..."
+AVAILABLE_SPACE=$(df -g / | awk 'NR==2 {print $4}')
+if [ "$AVAILABLE_SPACE" -lt 2 ]; then
+    log_error "Espace disque insuffisant: ${AVAILABLE_SPACE}GB disponible, 2GB requis"
+    exit 1
+fi
+
+# 4. Vérification Python système
+log_info "Vérification Python système..."
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    log_info "Python $PYTHON_VERSION détecté"
+else
+    log_error "Python 3 non trouvé"
+    exit 1
+fi
+
+# 5. Arrêt service existant
+if [ -f "$LAUNCHD_PLIST" ]; then
+    log_info "Arrêt service Home Assistant existant..."
+    
+    # Vérification si service est chargé
+    if launchctl list | grep -q "org.homeassistant.daemon"; then
+        launchctl unload -w "$LAUNCHD_PLIST" 2>/dev/null || true
+        sleep 2
+        
+        # Forcer arrêt processus
+        pkill -f "homeassistant-macos" 2>/dev/null || true
+        pkill -f "homeassistant" 2>/dev/null || true
+    fi
+    
+    log_info "Service arrêté"
+fi
+
+# 6. Backup configuration existante
+if [ -d "$HA_CONFIG_DIR/config" ] && [ -f "$HA_CONFIG_DIR/config/configuration.yaml" ]; then
+    log_info "Backup configuration existante..."
+    BACKUP_DIR="${HA_CONFIG_DIR}/backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
+    cp -r "$HA_CONFIG_DIR/config" "$BACKUP_DIR/"
+    log_info "Configuration sauvegardée dans $BACKUP_DIR"
+fi
+
+# 7. Vérification permissions administrateur
+log_info "Vérification permissions administrateur..."
+if [ "$(id -u)" -ne 0 ]; then
+    log_error "Installation requiert les permissions administrateur"
+    exit 1
+fi
+
+# 8. Vérification dépendances système
+log_info "Vérification dépendances système..."
+
+# Vérification sqlite3
+if ! command -v sqlite3 >/dev/null 2>&1; then
+    log_error "sqlite3 non trouvé"
+    exit 1
+fi
+
+# Vérification pfctl (firewall)
+if ! command -v pfctl >/dev/null 2>&1; then
+    log_error "pfctl non trouvé"
+    exit 1
+fi
+
+# 9. Vérification espace mémoire
+log_info "Vérification mémoire système..."
+MEMORY_GB=$(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 ))
+if [ "$MEMORY_GB" -lt 4 ]; then
+    log_error "Mémoire insuffisante: ${MEMORY_GB}GB disponible, 4GB recommandés"
+    exit 1
+fi
+
+log_info "Système compatible pour installation Home Assistant Desktop"
+exit 0

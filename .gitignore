@@ -1,0 +1,119 @@
+# Home Assistant Desktop for macOS - .gitignore
+
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Package files
+*.pkg
+*.dmg
+*.zip
+*.tar.gz
+*.tar.bz2
+
+# Logs
+*.log
+logs/
+
+# Configuration files with sensitive data
+config/secrets.yaml
+config/.secrets
+config/*_secret.yaml
+
+# Home Assistant specific
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+home-assistant_v2.db
+home-assistant.log
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+cache/
+tmp/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Test files
+.coverage
+.pytest_cache/
+test-results/
+.nyc_output
+
+# Documentation build
+docs/_build/
+docs/.doctrees/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

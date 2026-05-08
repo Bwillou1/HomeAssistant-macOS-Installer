@@ -1,0 +1,27 @@
+name: Home Assistant Desktop for macOS
+url: https://github.com/williamguindon/MacOS_HA
+maintainer: William Guindon <william.guindon@example.com>
+description: |
+  Native macOS desktop application for Home Assistant with system integration.
+  Features:
+  - Native macOS integration (LaunchDaemon, system tray)
+  - Universal Binary support (Intel + Apple Silicon)
+  - Automatic startup and background service
+  - Zeroconf/Bonjour discovery
+  - Bluetooth and Local Network permissions
+  - Code signed and notarized for security
+version: 1.0.0
+architectures:
+  - x86_64
+  - arm64
+requirements:
+  - macOS 12.0+
+  - 2GB disk space
+  - Administrator privileges for installation
+keywords:
+  - home assistant
+  - home automation
+  - macos
+  - desktop
+  - native
+  - system integration

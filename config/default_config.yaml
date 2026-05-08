@@ -1,0 +1,291 @@
+# Home Assistant Desktop for macOS - Configuration par défaut
+# Configuration optimisée pour macOS avec intégrations natives
+
+homeassistant:
+  # Informations de base
+  name: Maison
+  country: FR
+  language: fr
+  time_zone: Europe/Paris
+  
+  # Configuration macOS spécifique
+  internal_url: "http://homeassistant.local:8123"
+  external_url: "https://homeassistant.local:8123"
+  
+  # Configuration de sécurité
+  allowlist_external_dirs:
+    - "/Library/Application Support/HomeAssistant"
+    - "/Library/Logs/HomeAssistant"
+  
+  # Configuration avancée
+  debug: false
+  log_level: info
+
+# Configuration du logger pour macOS
+logger:
+  default: info
+  logs:
+    homeassistant.components: debug
+    homeassistant.core: info
+    homeassistant.helpers.script: warning
+    homeassistant.components.zeroconf: debug
+
+# Découverte automatique des appareils
+discovery:
+
+# Configuration Zeroconf/Bonjour pour macOS
+zeroconf:
+  # Activer la découverte via Bonjour
+  default_interface: true
+  
+# Configuration HTTP pour macOS
+http:
+  server_port: 8123
+  server_host: '0.0.0.0'
+  cors_allowed_origins:
+    - http://homeassistant.local:8123
+    - https://homeassistant.local:8123
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+# Configuration Bluetooth pour macOS
+bluetooth:
+  # Utiliser le Bluetooth natif de macOS
+  adapter: hci0
+  scanning_mode: active
+
+# Configuration des capteurs système macOS
+sensor:
+  # Plateforme de monitoring système
+  - platform: systemmonitor
+    resources:
+      # Mémoire
+      - type: memory_use_percent
+      - type: memory_free
+      - type: memory_available
+      - type: memory_use
+      
+      # Processeur
+      - type: processor_use
+      - type: processor_temperature
+      - type: load_1m
+      - type: load_5m
+      - type: load_15m
+      
+      # Disque
+      - type: disk_use_percent
+        arg: "/"
+      - type: disk_free
+        arg: "/"
+      - type: disk_use
+        arg: "/"
+        
+      # Réseau
+      - type: network_in
+      - type: network_out
+      - type: packets_in
+      - type: packets_out
+      
+      # Système
+      - type: last_boot
+      - type: since_last_boot
+
+  # Capteurs macOS spécifiques
+  - platform: rest
+    name: "macOS Version"
+    resource: "http://localhost:8123/api/system_info"
+    value_template: "{{ value_json.os_version }}"
+    scan_interval: 3600
+
+# Configuration des switches macOS
+switch:
+  # Switch système pour macOS
+  - platform: rest
+    name: "Mode Silencieux"
+    resource: "http://localhost:8123/api/system/silent_mode"
+    body_on: '{"silent_mode": true}'
+    body_off: '{"silent_mode": false}'
+
+# Configuration des binary sensors macOS
+binary_sensor:
+  # Détecteurs d'état système
+  - platform: systemmonitor
+    resources:
+      - type: disk_use
+        arg: "/"
+      - type: network_in
+      - type: network_out
+
+# Configuration des appareils mobiles
+mobile_app:
+
+# Configuration des notifications macOS
+notify:
+  # Notifications système macOS
+  - platform: file
+    name: "macOS Notifications"
+    filename: "/tmp/ha_notifications.log"
+    timestamp: true
+
+# Configuration de l'automatisation
+automation:
+  # Automatisation de démarrage
+  - alias: "Démarrage Home Assistant Desktop"
+    description: "Actions au démarrage de Home Assistant"
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - service: system_log.write
+        data:
+          message: "Home Assistant Desktop for macOS démarré"
+          level: info
+
+  # Automatisation de surveillance système
+  - alias: "Alerte Mémoire Élevée"
+    description: "Alerte lorsque l'utilisation mémoire dépasse 80%"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.memory_use_percent
+        above: 80
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "Alerte Mémoire"
+          message: "Utilisation mémoire: {{ states('sensor.memory_use_percent') }}%"
+
+# Configuration des scripts macOS
+script:
+  # Script de redémarrage service
+  restart_homeassistant:
+    alias: "Redémarrer Home Assistant"
+    sequence:
+      - service: homeassistant.restart
+      
+  # Script de mise à jour
+  update_homeassistant:
+    alias: "Mettre à jour Home Assistant"
+    sequence:
+      - service: homeassistant.check_config
+      - service: homeassistant.reload_core_config
+
+# Configuration des scènes
+scene:
+  # Scènes prédéfinies
+  - name: "Mode Nuit"
+    entities:
+      light.living_room:
+        state: off
+        brightness_pct: 0
+      light.bedroom:
+        state: off
+        brightness_pct: 10
+
+# Configuration des groupes
+group:
+  # Groupes de capteurs système
+  system_sensors:
+    name: "Capteurs Système"
+    entities:
+      - sensor.memory_use_percent
+      - sensor.processor_use
+      - sensor.disk_use_percent
+      - sensor.load_1m
+      
+  # Groupes de switches système
+  system_switches:
+    name: "Contrôles Système"
+    entities:
+      - switch.mode_silencieux
+
+# Configuration de l'historique
+recorder:
+  # Base de données optimisée pour macOS
+  db_url: "sqlite:///config/home-assistant.db"
+  purge_keep_days: 10
+  commit_interval: 10
+  include:
+    entities:
+      - sensor.*
+      - binary_sensor.*
+      - switch.*
+  exclude:
+    entities:
+      - sensor.last_boot
+
+# Configuration de l'historique détaillé
+history:
+
+# Configuration du journal
+logbook:
+
+# Configuration de la carte
+map:
+
+# Configuration des médias
+media_source:
+
+# Configuration du streaming
+stream:
+
+# Configuration des tags
+tag:
+
+# Configuration des zones
+zone:
+  # Zone domicile
+  - name: Maison
+    latitude: 48.8566
+    longitude: 2.3522
+    radius: 100
+    icon: mdi:home
+
+# Configuration des entrées/sorties
+input_boolean:
+  # Entrées booléennes pour automatisations
+  mode_automatique:
+    name: "Mode Automatique"
+    initial: true
+    
+  mode_vacances:
+    name: "Mode Vacances"
+    initial: false
+
+input_number:
+  # Entrées numériques pour configuration
+  temperature_consigne:
+    name: "Température de consigne"
+    min: 15
+    max: 25
+    step: 0.5
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer
+
+input_select:
+  # Entrées de sélection
+  mode_chauffage:
+    name: "Mode de chauffage"
+    options:
+      - "Arrêt"
+      - "Éco"
+      - "Confort"
+    initial: "Éco"
+    icon: mdi:radiator
+
+# Configuration des intégrations supplémentaires
+frontend:
+  # Configuration de l'interface web
+  themes:
+    # Thèmes par défaut pour macOS
+    default:
+      primary-color: "#41B883"
+      accent-color: "#35495E"
+      dark-primary-color: "#2c3e50"
+
+# Configuration du panneau de configuration
+config:
+
+# Configuration du journal des erreurs
+system_health:

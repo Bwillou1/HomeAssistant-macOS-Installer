@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Assistant Desktop for macOS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            padding: 40px;
+            text-align: center;
+        }
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: linear-gradient(45deg, #41B883, #35495E);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            font-weight: bold;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .features {
+            text-align: left;
+            margin: 30px 0;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #41B883;
+        }
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            background: #41B883;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        .system-requirements {
+            background: #e8f4f8;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        .system-requirements h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .requirement {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        .requirement:before {
+            content: "✓";
+            color: #41B883;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">HA</div>
+        <h1>Home Assistant Desktop for macOS</h1>
+        <div class="subtitle">
+            Transformation native de macOS en hôte Home Assistant de niveau production
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🚀</div>
+                <div>
+                    <strong>Performance Native</strong><br>
+                    Binaire Universal 2 pour Intel et Apple Silicon
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔧</div>
+                <div>
+                    <strong>Intégration Système</strong><br>
+                    LaunchDaemon, TCC permissions, firewall configuré
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <div>
+                    <strong>Découverte Réseau</strong><br>
+                    Apple Bonjour/mDNS pour latence 0ms
+                </div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div>
+                    <strong>Sécurité</strong><br>
+                    Sandbox, signature code, notarisation Apple
+                </div>
+            </div>
+        </div>
+        
+        <div class="system-requirements">
+            <h3>Configuration Requise</h3>
+            <div class="requirement">macOS 12.0+ (Monterey ou supérieur)</div>
+            <div class="requirement">Intel x86_64 ou Apple Silicon M1/M2/M3</div>
+            <div class="requirement">4GB RAM minimum (8GB recommandés)</div>
+            <div class="requirement">2GB espace disque disponible</div>
+            <div class="requirement">Permissions administrateur</div>
+        </div>
+        
+        <div class="footer">
+            <p>Cliquez sur "Continuer" pour installer Home Assistant Desktop</p>
+            <p>L'installation configurera automatiquement les permissions système requises</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.homeassistant.daemon</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/homeassistant-macos</string>
+        <string>--daemon</string>
+    </array>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>NetworkState</key>
+        <true/>
+    </dict>
+    
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <key>StandardOutPath</key>
+    <string>/Library/Logs/HomeAssistant/daemon.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Library/Logs/HomeAssistant/daemon.error.log</string>
+    
+    <key>WorkingDirectory</key>
+    <string>/Library/Application Support/HomeAssistant</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/usr/local/lib/homeassistant</string>
+        <key>HA_CONFIG</key>
+        <string>/Library/Application Support/HomeAssistant/config</string>
+        <key>HA_LOG_FILE</key>
+        <string>/Library/Logs/HomeAssistant/home-assistant.log</string>
+    </dict>
+    
+    <key>HardResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>65536</integer>
+        <key>CPU</key>
+        <integer>unlimited</integer>
+        <key>Memory</key>
+        <integer>unlimited</integer>
+    </dict>
+    
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>32768</integer>
+        <key>CPU</key>
+        <integer>unlimited</integer>
+        <key>Memory</key>
+        <integer>4294967296</integer>
+    </dict>
+    
+    <key>StartInterval</key>
+    <integer>300</integer>
+    
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    
+    <key>LowPriorityIO</key>
+    <true/>
+    
+    <key>LaunchOnlyOnce</key>
+    <false/>
+    
+    <key>AbandonProcessGroup</key>
+    <true/>
+    
+    <!-- Entitlements pour permissions système -->
+    <key>MachServices</key>
+    <dict>
+        <key>org.homeassistant.bluetooth</key>
+        <true/>
+        <key>org.homeassistant.network</key>
+        <true/>
+    </dict>
+    
+    <!-- Sandbox configuration -->
+    <key>SandboxProfile</key>
+    <string>/usr/local/share/homeassistant/sandbox-profile.sb</string>
+    
+    <!-- TCC permissions -->
+    <key>TCCServices</key>
+    <array>
+        <string>kTCCServiceBluetooth</string>
+        <string>kTCCServiceLocalNetwork</string>
+    </array>
+</dict>
+</plist>

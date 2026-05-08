@@ -1,0 +1,51 @@
+#!/bin/bash
+set -euo pipefail
+
+LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+USER_NAME="_homeassistant"
+GROUP_NAME="_homeassistant"
+
+echo "[INFO] Pré-installation Home Assistant Desktop for macOS" >&2
+
+# Créer le groupe s'il n'existe pas
+if ! dscl . -read /Groups/$GROUP_NAME >/dev/null 2>&1; then
+    echo "[INFO] Création du groupe système $GROUP_NAME" >&2
+    # Find a free GID between 400 and 499 (standard for macOS daemon groups)
+    GID=400
+    while dscl . -read /Groups/gid_$GID >/dev/null 2>&1 || dscl . -search /Groups PrimaryGroupID $GID | grep -q $GID; do
+        GID=$((GID+1))
+    done
+    dscl . -create /Groups/$GROUP_NAME
+    dscl . -create /Groups/$GROUP_NAME PrimaryGroupID $GID
+    dscl . -create /Groups/$GROUP_NAME RealName "Home Assistant Group"
+    dscl . -create /Groups/$GROUP_NAME RecordName $GROUP_NAME
+fi
+
+# Créer l'utilisateur s'il n'existe pas
+if ! dscl . -read /Users/$USER_NAME >/dev/null 2>&1; then
+    echo "[INFO] Création de l'utilisateur système $USER_NAME" >&2
+    # Find a free UID between 400 and 499 (standard for macOS daemon users)
+    UID_VAL=400
+    while dscl . -read /Users/uid_$UID_VAL >/dev/null 2>&1 || dscl . -search /Users UniqueID $UID_VAL | grep -q $UID_VAL; do
+        UID_VAL=$((UID_VAL+1))
+    done
+    dscl . -create /Users/$USER_NAME
+    dscl . -create /Users/$USER_NAME UniqueID $UID_VAL
+    dscl . -create /Users/$USER_NAME PrimaryGroupID $(dscl . -read /Groups/$GROUP_NAME PrimaryGroupID | awk '{print $2}')
+    dscl . -create /Users/$USER_NAME UserShell /usr/bin/false
+    dscl . -create /Users/$USER_NAME NFSHomeDirectory "/Library/Application Support/HomeAssistant"
+    dscl . -create /Users/$USER_NAME RealName "Home Assistant Daemon"
+    dscl . -create /Users/$USER_NAME RecordName $USER_NAME
+    # Cacher l'utilisateur de la fenêtre de login
+    dscl . -create /Users/$USER_NAME IsHidden 1
+fi
+
+# Arrête proprement l'ancien service si présent (upgrade/réinstall)
+if [ -f "$LAUNCHD_PLIST" ]; then
+  launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+  launchctl unload -w "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+fi
+pkill -f "/usr/local/bin/homeassistant-macos" >/dev/null 2>&1 || true
+pkill -f "/opt/homeassistant/bin/hass" >/dev/null 2>&1 || true
+
+exit 0

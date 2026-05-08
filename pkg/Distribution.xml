@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<installer-gui-script minSpecVersion="1.0">
+    <title>Home Assistant Desktop for macOS</title>
+    <options customize="never" rootVolumeOnly="true"/>
+    <welcome file="welcome.html"/>
+    <conclusion file="conclusion.html"/>
+    <license file="license.txt"/>
+    
+    <pkg-ref id="org.homeassistant.desktop" version="1.0.0" onConclusion="none">#homeassistant-core.pkg</pkg-ref>
+    
+    <choices-outline>
+        <line choice="default"/>
+    </choices-outline>
+    <choice id="default" title="Home Assistant Desktop">
+        <pkg-ref id="org.homeassistant.desktop"/>
+    </choice>
+</installer-gui-script>

@@ -1,0 +1,127 @@
+#!/bin/bash
+set -euo pipefail
+
+HA_CONFIG_DIR="/Library/Application Support/HomeAssistant"
+HA_LOG_DIR="/Library/Logs/HomeAssistant"
+HA_CONFIG_FILE="$HA_CONFIG_DIR/config/configuration.yaml"
+HA_BIN_PATH="/opt/homeassistant/bin/hass"
+LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+USER_NAME="_homeassistant"
+GROUP_NAME="_homeassistant"
+
+echo "[INFO] Configuration Home Assistant Desktop for macOS" >&2
+
+mkdir -p "$HA_CONFIG_DIR/config"
+mkdir -p "$HA_LOG_DIR"
+
+# Attribution des droits au nouvel utilisateur système
+chown -R $USER_NAME:$GROUP_NAME "$HA_CONFIG_DIR" "$HA_LOG_DIR" >/dev/null 2>&1 || true
+chmod -R 755 "$HA_CONFIG_DIR" "$HA_LOG_DIR" >/dev/null 2>&1 || true
+
+# Droits sur l'installation dans /opt
+if [ -d "/opt/homeassistant" ]; then
+    chown -R $USER_NAME:$GROUP_NAME "/opt/homeassistant" >/dev/null 2>&1 || true
+    chmod -R 755 "/opt/homeassistant" >/dev/null 2>&1 || true
+fi
+
+if [ ! -x "$HA_BIN_PATH" ]; then
+  echo "[ERROR] Binaire absent ou non exécutable: $HA_BIN_PATH" >&2
+  exit 1
+fi
+
+if [ ! -f "$LAUNCHD_PLIST" ]; then
+  echo "[ERROR] LaunchDaemon absent: $LAUNCHD_PLIST" >&2
+  exit 1
+fi
+
+# Ne pas écraser la config utilisateur existante
+if [ ! -f "$HA_CONFIG_FILE" ]; then
+cat > "$HA_CONFIG_FILE" << 'EOF'
+# Home Assistant Configuration
+homeassistant:
+  name: Maison
+  country: FR
+  language: fr
+  time_zone: Europe/Paris
+
+logger:
+  default: info
+  logs:
+    homeassistant.components: debug
+
+# Empty defaults keep Home Assistant's core script/automation setup happy.
+automation: []
+script: {}
+
+# Découverte réseau
+discovery:
+
+# Intégrations système
+sensor:
+  - platform: systemmonitor
+    resources:
+      - type: memory_use_percent
+      - type: processor_use
+      - type: disk_use_percent
+        arg: /
+      - type: network_in
+      - type: network_out
+      - type: last_boot
+      - type: load_1m
+      - type: load_5m
+      - type: load_15m
+EOF
+fi
+
+if ! grep -q '^automation:' "$HA_CONFIG_FILE"; then
+cat >> "$HA_CONFIG_FILE" << 'EOF'
+
+automation: []
+EOF
+fi
+
+if ! grep -q '^script:' "$HA_CONFIG_FILE"; then
+cat >> "$HA_CONFIG_FILE" << 'EOF'
+
+script: {}
+EOF
+fi
+
+chown $USER_NAME:$GROUP_NAME "$HA_CONFIG_FILE" >/dev/null 2>&1 || true
+chmod 644 "$HA_CONFIG_FILE" >/dev/null 2>&1 || true
+
+# Configuration des droits du LaunchDaemon
+chown root:wheel "$LAUNCHD_PLIST"
+chmod 644 "$LAUNCHD_PLIST"
+
+# Recharge et tente de démarrer le service sans bloquer l'installation
+launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+if ! launchctl bootstrap system "$LAUNCHD_PLIST" >/dev/null 2>&1; then
+  echo "[WARN] Service non démarré automatiquement. Démarrez-le manuellement avec launchctl." >&2
+else
+  launchctl enable system/org.homeassistant.daemon >/dev/null 2>&1 || true
+  launchctl kickstart -k system/org.homeassistant.daemon >/dev/null 2>&1 || true
+fi
+
+sleep 1
+
+if [ -f "$HA_BIN_PATH" ] && [ -f "$LAUNCHD_PLIST" ] && [ -f "$HA_CONFIG_FILE" ]; then
+    echo "[INFO] Installation réussie" >&2
+    echo "[INFO] Interface web: http://localhost:8123" >&2
+    
+    # Ouvrir automatiquement l'interface web après 30 secondes
+    (
+        sleep 30
+        echo "[INFO] Ouverture automatique de l'interface web..." >&2
+        open "http://localhost:8123" 2>/dev/null || true
+    ) &
+    
+    # Notification macOS
+    osascript -e 'display notification "Home Assistant est en cours de démarrage" with title "Home Assistant Desktop" subtitle "Interface web: http://localhost:8123"' 2>/dev/null || true
+    
+else
+    echo "[ERROR] Installation incomplète" >&2
+    exit 1
+fi
+
+exit 0

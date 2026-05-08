@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation Terminée - Home Assistant Desktop</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #41B883 0%, #35495E 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            padding: 40px;
+            text-align: center;
+        }
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: #41B883;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .message {
+            color: #27ae60;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        .next-steps {
+            text-align: left;
+            margin: 30px 0;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #41B883;
+        }
+        .step-number {
+            background: #41B883;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .step-description {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .access-info {
+            background: #e8f4f8;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        .access-info h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .access-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        .access-label {
+            font-weight: 500;
+            color: #34495e;
+        }
+        .access-value {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .troubleshooting {
+            margin-top: 30px;
+            text-align: left;
+        }
+        .troubleshooting h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .troubleshooting-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #95a5a6;
+        }
+        .button {
+            display: inline-block;
+            background: #41B883;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #369870;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h1>Installation Terminée!</h1>
+        <div class="message">
+            Home Assistant Desktop a été installé avec succès sur votre macOS
+        </div>
+        
+        <div class="next-steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Accédez à Home Assistant</div>
+                    <div class="step-description">Ouvrez votre navigateur web et accédez à l'interface</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Configuration initiale</div>
+                    <div class="step-description">Créez votre compte utilisateur et configurez vos intégrations</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Découverte automatique</div>
+                    <div class="step-description">Les appareils compatibles seront découverts automatiquement via Bonjour</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="access-info">
+            <h3>Informations d'Accès</h3>
+            <div class="access-item">
+                <span class="access-label">Interface Web</span>
+                <span class="access-value">http://localhost:8123</span>
+            </div>
+            <div class="access-item">
+                <span class="access-label">Configuration</span>
+                <span class="access-value">/Library/Application Support/HomeAssistant</span>
+            </div>
+            <div class="access-item">
+                <span class="access-label">Logs</span>
+                <span class="access-value">/Library/Logs/HomeAssistant</span>
+            </div>
+            <div class="access-item">
+                <span class="access-label">Service</span>
+                <span class="access-value">org.homeassistant.daemon</span>
+            </div>
+        </div>
+        
+        <div class="troubleshooting">
+            <h3>Dépannage</h3>
+            <div class="troubleshooting-item">
+                <strong>Service ne démarre pas :</strong> Vérifiez les logs dans /Library/Logs/HomeAssistant/
+            </div>
+            <div class="troubleshooting-item">
+                <strong>Permissions refusées :</strong> Redémarrez votre Mac pour finaliser les permissions TCC
+            </div>
+            <div class="troubleshooting-item">
+                <strong>Accès réseau impossible :</strong> Vérifiez la configuration du firewall
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="http://localhost:8123" class="button">Ouvrir Home Assistant</a>
+            <a href="file:///Library/Logs/HomeAssistant" class="button">Voir les Logs</a>
+        </div>
+        
+        <div class="footer">
+            <p>Home Assistant Desktop démarre automatiquement au démarrage de votre Mac</p>
+            <p>Pour plus d'informations : <a href="https://www.home-assistant.io" style="color: #41B883;">home-assistant.io</a></p>
+        </div>
+    </div>
+</body>
+</html>

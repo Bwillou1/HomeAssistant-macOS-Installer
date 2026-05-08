@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Installation Terminée</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        .success-box {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        .next-steps {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            text-align: left;
+        }
+        .step {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .url-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .note {
+            background: rgba(255,193,7,0.2);
+            border: 1px solid rgba(255,193,7,0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .button {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Installation Terminée avec Succès!</h1>
+        
+        <div class="success-box">
+            <strong>🎉 Home Assistant Desktop est maintenant installé sur votre Mac!</strong><br>
+            Le service système a été configuré et démarrera automatiquement.
+        </div>
+        
+        <div class="next-steps">
+            <div class="step">🚀 <strong>Étape 1 :</strong> Home Assistant démarre automatiquement</div>
+            <div class="step">⏱️ <strong>Étape 2 :</strong> Patientez 30-60 secondes pour l'initialisation</div>
+            <div class="step">🌐 <strong>Étape 3 :</strong> Ouvrez votre navigateur web</div>
+            <div class="step">📍 <strong>Étape 4 :</strong> Accédez à l'interface ci-dessous</div>
+        </div>
+        
+        <div class="url-box">
+            http://localhost:8123
+        </div>
+        
+        <div class="note">
+            <strong>💡 Astuce :</strong><br>
+            • Home Assistant démarre automatiquement à chaque allumage de votre Mac<br>
+            • L'interface reste accessible en arrière-plan<br>
+            • Pas besoin de terminal ni de configuration manuelle
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="http://localhost:8123" class="button">🌐 Ouvrir Home Assistant</a>
+            <a href="#" onclick="window.close()" class="button">✨ Terminer</a>
+        </div>
+        
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 30px;">
+            Si l'interface ne s'ouvre pas, patientez quelques minutes et réessayez.<br>
+            Le service est en cours d'initialisation en arrière-plan.
+        </p>
+    </div>
+</body>
+</html>
