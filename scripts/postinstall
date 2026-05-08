@@ -44,6 +44,8 @@ homeassistant:
   language: fr
   time_zone: Europe/Paris
 
+default_config:
+
 logger:
   default: info
   logs:
@@ -55,21 +57,6 @@ script: {}
 
 # Découverte réseau
 discovery:
-
-# Intégrations système
-sensor:
-  - platform: systemmonitor
-    resources:
-      - type: memory_use_percent
-      - type: processor_use
-      - type: disk_use_percent
-        arg: /
-      - type: network_in
-      - type: network_out
-      - type: last_boot
-      - type: load_1m
-      - type: load_5m
-      - type: load_15m
 EOF
 fi
 
@@ -87,15 +74,21 @@ script: {}
 EOF
 fi
 
-chown $USER_NAME:$GROUP_NAME "$HA_CONFIG_FILE" >/dev/null 2>&1 || true
+chown -R $USER_NAME:$GROUP_NAME "$HA_CONFIG_DIR" >/dev/null 2>&1 || true
 chmod 644 "$HA_CONFIG_FILE" >/dev/null 2>&1 || true
 
+# Suppression du lock en cas de démarrage précédent avorté ou problème de permissions
+rm -f "$HA_CONFIG_DIR/.ha_run.lock"
+
 # Configuration des droits du LaunchDaemon
+# On fait le bootout AVANT de modifier les permissions pour éviter l'état fantôme (bug 5: Input/output error)
+launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+launchctl bootout system/org.homeassistant.daemon >/dev/null 2>&1 || true
+
 chown root:wheel "$LAUNCHD_PLIST"
 chmod 644 "$LAUNCHD_PLIST"
 
 # Recharge et tente de démarrer le service sans bloquer l'installation
-launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
 if ! launchctl bootstrap system "$LAUNCHD_PLIST" >/dev/null 2>&1; then
   echo "[WARN] Service non démarré automatiquement. Démarrez-le manuellement avec launchctl." >&2
 else

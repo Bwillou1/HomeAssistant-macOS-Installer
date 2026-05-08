@@ -4,7 +4,7 @@
 .PHONY: all clean build package install uninstall help
 
 # Configuration
-VERSION = 1.0.0
+VERSION = 2.0.0
 BUILD_DIR = build
 DIST_DIR = dist
 PKG_NAME = HomeAssistant-macOS

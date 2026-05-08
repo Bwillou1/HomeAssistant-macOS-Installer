@@ -180,17 +180,7 @@ homeassistant:
   language: fr
   time_zone: Europe/Paris
 
-# Capteurs système macOS
-sensor:
-  - platform: systemmonitor
-    resources:
-      - type: processor_use
-      - type: memory_use_percent
-      - type: disk_use_percent
-        arg: "/"
-      - type: network_in
-      - type: network_out
-      - type: last_boot
+default_config:
 
 # Bluetooth natif
 bluetooth:

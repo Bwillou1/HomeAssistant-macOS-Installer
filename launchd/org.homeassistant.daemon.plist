@@ -13,23 +13,25 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/homeassistant/bin/hass</string>
+        <string>/bin/bash</string>
         <string>-c</string>
-        <string>/Library/Application Support/HomeAssistant/config</string>
-        <string>--log-file</string>
-        <string>/Library/Logs/HomeAssistant/home-assistant.log</string>
-        <string>--log-rotate-days</string>
-        <string>7</string>
+        <string>rm -f "/Library/Application Support/HomeAssistant/config/.ha_run.lock" &amp;&amp; exec /opt/homeassistant/bin/hass -c "/Library/Application Support/HomeAssistant/config" --log-file "/Library/Logs/HomeAssistant/home-assistant.log" --log-rotate-days 7</string>
     </array>
 
     <key>RunAtLoad</key>
     <true/>
 
     <key>KeepAlive</key>
-    <dict>
-        <key>SuccessfulExit</key>
-        <false/>
-    </dict>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>LowPriorityIO</key>
+    <true/>
 
     <key>StandardOutPath</key>
     <string>/Library/Logs/HomeAssistant/daemon.log</string>
@@ -44,6 +46,8 @@
     <dict>
         <key>PATH</key>
         <string>/opt/homeassistant/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>FFMPEG_HWACCEL</key>
+        <string>videotoolbox</string>
     </dict>
 
     <key>SoftResourceLimits</key>

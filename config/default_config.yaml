@@ -21,6 +21,9 @@ homeassistant:
   debug: false
   log_level: info
 
+default_config:
+
+
 # Configuration du logger pour macOS
 logger:
   default: info
@@ -58,39 +61,6 @@ bluetooth:
 
 # Configuration des capteurs système macOS
 sensor:
-  # Plateforme de monitoring système
-  - platform: systemmonitor
-    resources:
-      # Mémoire
-      - type: memory_use_percent
-      - type: memory_free
-      - type: memory_available
-      - type: memory_use
-      
-      # Processeur
-      - type: processor_use
-      - type: processor_temperature
-      - type: load_1m
-      - type: load_5m
-      - type: load_15m
-      
-      # Disque
-      - type: disk_use_percent
-        arg: "/"
-      - type: disk_free
-        arg: "/"
-      - type: disk_use
-        arg: "/"
-        
-      # Réseau
-      - type: network_in
-      - type: network_out
-      - type: packets_in
-      - type: packets_out
-      
-      # Système
-      - type: last_boot
-      - type: since_last_boot
 
   # Capteurs macOS spécifiques
   - platform: rest
@@ -110,13 +80,6 @@ switch:
 
 # Configuration des binary sensors macOS
 binary_sensor:
-  # Détecteurs d'état système
-  - platform: systemmonitor
-    resources:
-      - type: disk_use
-        arg: "/"
-      - type: network_in
-      - type: network_out
 
 # Configuration des appareils mobiles
 mobile_app:

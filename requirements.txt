@@ -23,5 +23,12 @@ PyTurboJPEG
 # System monitoring
 psutil
 
+# Voice and Audio pipeline
+ha-ffmpeg
+mutagen
+hassil
+pymicro-vad
+pyspeex-noise
+
 # Build dependencies
 setuptools

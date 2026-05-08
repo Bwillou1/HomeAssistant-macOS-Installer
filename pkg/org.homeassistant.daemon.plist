@@ -4,99 +4,56 @@
 <dict>
     <key>Label</key>
     <string>org.homeassistant.daemon</string>
-    
+
+    <key>UserName</key>
+    <string>_homeassistant</string>
+
+    <key>GroupName</key>
+    <string>_homeassistant</string>
+
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/homeassistant-macos</string>
-        <string>--daemon</string>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>rm -f "/Library/Application Support/HomeAssistant/config/.ha_run.lock" &amp;&amp; exec /opt/homeassistant/bin/hass -c "/Library/Application Support/HomeAssistant/config" --log-file "/Library/Logs/HomeAssistant/home-assistant.log" --log-rotate-days 7</string>
     </array>
-    
+
     <key>RunAtLoad</key>
     <true/>
-    
+
     <key>KeepAlive</key>
-    <dict>
-        <key>SuccessfulExit</key>
-        <false/>
-        <key>NetworkState</key>
-        <true/>
-    </dict>
-    
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
     <key>ProcessType</key>
     <string>Background</string>
-    
+
+    <key>LowPriorityIO</key>
+    <true/>
+
     <key>StandardOutPath</key>
     <string>/Library/Logs/HomeAssistant/daemon.log</string>
-    
+
     <key>StandardErrorPath</key>
     <string>/Library/Logs/HomeAssistant/daemon.error.log</string>
-    
+
     <key>WorkingDirectory</key>
     <string>/Library/Application Support/HomeAssistant</string>
-    
+
     <key>EnvironmentVariables</key>
     <dict>
-        <key>PYTHONPATH</key>
-        <string>/usr/local/lib/homeassistant</string>
-        <key>HA_CONFIG</key>
-        <string>/Library/Application Support/HomeAssistant/config</string>
-        <key>HA_LOG_FILE</key>
-        <string>/Library/Logs/HomeAssistant/home-assistant.log</string>
+        <key>PATH</key>
+        <string>/opt/homeassistant/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>FFMPEG_HWACCEL</key>
+        <string>videotoolbox</string>
     </dict>
-    
-    <key>HardResourceLimits</key>
-    <dict>
-        <key>NumberOfFiles</key>
-        <integer>65536</integer>
-        <key>CPU</key>
-        <integer>unlimited</integer>
-        <key>Memory</key>
-        <integer>unlimited</integer>
-    </dict>
-    
+
     <key>SoftResourceLimits</key>
     <dict>
         <key>NumberOfFiles</key>
         <integer>32768</integer>
-        <key>CPU</key>
-        <integer>unlimited</integer>
-        <key>Memory</key>
-        <integer>4294967296</integer>
     </dict>
-    
-    <key>StartInterval</key>
-    <integer>300</integer>
-    
-    <key>ThrottleInterval</key>
-    <integer>10</integer>
-    
-    <key>LowPriorityIO</key>
-    <true/>
-    
-    <key>LaunchOnlyOnce</key>
-    <false/>
-    
-    <key>AbandonProcessGroup</key>
-    <true/>
-    
-    <!-- Entitlements pour permissions système -->
-    <key>MachServices</key>
-    <dict>
-        <key>org.homeassistant.bluetooth</key>
-        <true/>
-        <key>org.homeassistant.network</key>
-        <true/>
-    </dict>
-    
-    <!-- Sandbox configuration -->
-    <key>SandboxProfile</key>
-    <string>/usr/local/share/homeassistant/sandbox-profile.sb</string>
-    
-    <!-- TCC permissions -->
-    <key>TCCServices</key>
-    <array>
-        <string>kTCCServiceBluetooth</string>
-        <string>kTCCServiceLocalNetwork</string>
-    </array>
 </dict>
 </plist>

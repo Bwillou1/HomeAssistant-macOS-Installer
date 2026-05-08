@@ -66,6 +66,8 @@ homeassistant:
   language: fr
   time_zone: Europe/Paris
 
+default_config:
+
 logger:
   default: info
   logs:
@@ -73,30 +75,27 @@ logger:
 
 # Découverte réseau
 discovery:
-
-# Intégrations système
-sensor:
-  - platform: systemmonitor
-    resources:
-      - type: memory_use_percent
-      - type: processor_use
-      - type: disk_use_percent
-        arg: /
-      - type: network_in
-      - type: network_out
-      - type: last_boot
-      - type: load_1m
-      - type: load_5m
-      - type: load_15m
 EOF
 
-chown root:wheel "$HA_CONFIG_DIR/config/configuration.yaml" 2>/dev/null || true
+chown -R root:wheel "$HA_CONFIG_DIR" 2>/dev/null || true
 chmod 644 "$HA_CONFIG_DIR/config/configuration.yaml" 2>/dev/null || true
+
+# Suppression du lock en cas de démarrage précédent avorté ou problème de permissions
+rm -f "$HA_CONFIG_DIR/.ha_run.lock"
 
 # 6. Démarrage service (optionnel)
 log_info "Démarrage service Home Assistant..."
 if command -v launchctl >/dev/null 2>&1; then
-    launchctl load -w "$LAUNCHD_PLIST" 2>/dev/null || log_info "Service déjà configuré"
+    # Force bootout first to clear any ghost state
+    launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+    launchctl bootout system/org.homeassistant.daemon >/dev/null 2>&1 || true
+
+    if ! launchctl bootstrap system "$LAUNCHD_PLIST" >/dev/null 2>&1; then
+        log_info "Service non démarré automatiquement."
+    else
+        launchctl enable system/org.homeassistant.daemon >/dev/null 2>&1 || true
+        launchctl kickstart -k system/org.homeassistant.daemon >/dev/null 2>&1 || true
+    fi
 fi
 
 # 7. Vérification finale
