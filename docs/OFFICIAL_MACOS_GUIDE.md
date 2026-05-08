@@ -191,7 +191,7 @@ bluetooth:
 notify:
   - platform: file
     name: macos_notifications
-    filename: /tmp/ha_notifications.log
+    filename: /Library/Logs/HomeAssistant/notifications.log
 ```
 
 #### Appareils Externes

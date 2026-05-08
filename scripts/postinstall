@@ -16,7 +16,9 @@ mkdir -p "$HA_LOG_DIR"
 
 # Attribution des droits au nouvel utilisateur système
 chown -R $USER_NAME:$GROUP_NAME "$HA_CONFIG_DIR" "$HA_LOG_DIR" >/dev/null 2>&1 || true
-chmod -R 755 "$HA_CONFIG_DIR" "$HA_LOG_DIR" >/dev/null 2>&1 || true
+chmod -R 755 "$HA_CONFIG_DIR" >/dev/null 2>&1 || true
+# Permissions plus restrictives pour les logs (sécurité)
+chmod -R 750 "$HA_LOG_DIR" >/dev/null 2>&1 || true
 
 # Droits sur l'installation dans /opt
 if [ -d "/opt/homeassistant" ]; then

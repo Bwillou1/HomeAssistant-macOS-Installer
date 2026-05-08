@@ -109,8 +109,11 @@ fi
 
 # 10. Nettoyage des fichiers temporaires
 log_info "Nettoyage des fichiers temporaires..."
+# Nettoyage des anciens fichiers temporaires (sécurité)
 rm -f /tmp/ha_notifications.log 2>/dev/null || true
 rm -rf /tmp/homeassistant-* 2>/dev/null || true
+# Nettoyage du nouveau fichier de notifications
+rm -f /Library/Logs/HomeAssistant/notifications.log 2>/dev/null || true
 
 # 11. Suppression des entrées launchd restantes
 log_info "Nettoyage des entrées launchd..."

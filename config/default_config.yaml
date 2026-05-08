@@ -89,7 +89,7 @@ notify:
   # Notifications système macOS
   - platform: file
     name: "macOS Notifications"
-    filename: "/tmp/ha_notifications.log"
+    filename: "/Library/Logs/HomeAssistant/notifications.log"
     timestamp: true
 
 # Configuration de l'automatisation
