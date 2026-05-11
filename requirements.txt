@@ -28,7 +28,7 @@ ha-ffmpeg
 mutagen
 hassil
 pymicro-vad
-pyspeex-noise
+git+https://github.com/rhasspy/pyspeex-noise.git
 
 # Build dependencies
 setuptools

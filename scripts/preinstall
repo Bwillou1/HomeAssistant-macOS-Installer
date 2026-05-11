@@ -5,11 +5,21 @@ LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
 USER_NAME="_homeassistant"
 GROUP_NAME="_homeassistant"
 
-echo "[INFO] Pré-installation Home Assistant Desktop for macOS" >&2
+echo "[INFO] Pre-installing Home Assistant Desktop for macOS (vVERSION_PLACEHOLDER)" >&2
 
-# Créer le groupe s'il n'existe pas
+# Check existing version
+EXISTING_VERSION_FILE="/opt/homeassistant/VERSION"
+if [ -f "$EXISTING_VERSION_FILE" ]; then
+    EXISTING_VERSION=$(cat "$EXISTING_VERSION_FILE")
+    echo "[INFO] Existing version detected: $EXISTING_VERSION" >&2
+    if [ "$EXISTING_VERSION" == "VERSION_PLACEHOLDER" ]; then
+        echo "[INFO] Version VERSION_PLACEHOLDER is already installed. Forced reinstallation." >&2
+    fi
+fi
+
+# Create group if it doesn't exist
 if ! dscl . -read /Groups/$GROUP_NAME >/dev/null 2>&1; then
-    echo "[INFO] Création du groupe système $GROUP_NAME" >&2
+    echo "[INFO] Creating system group $GROUP_NAME" >&2
     # Find a free GID between 400 and 499 (standard for macOS daemon groups)
     GID=400
     while dscl . -read /Groups/gid_$GID >/dev/null 2>&1 || dscl . -search /Groups PrimaryGroupID $GID | grep -q $GID; do
@@ -21,9 +31,9 @@ if ! dscl . -read /Groups/$GROUP_NAME >/dev/null 2>&1; then
     dscl . -create /Groups/$GROUP_NAME RecordName $GROUP_NAME
 fi
 
-# Créer l'utilisateur s'il n'existe pas
+# Create user if it doesn't exist
 if ! dscl . -read /Users/$USER_NAME >/dev/null 2>&1; then
-    echo "[INFO] Création de l'utilisateur système $USER_NAME" >&2
+    echo "[INFO] Creating system user $USER_NAME" >&2
     # Find a free UID between 400 and 499 (standard for macOS daemon users)
     UID_VAL=400
     while dscl . -read /Users/uid_$UID_VAL >/dev/null 2>&1 || dscl . -search /Users UniqueID $UID_VAL | grep -q $UID_VAL; do
@@ -36,16 +46,16 @@ if ! dscl . -read /Users/$USER_NAME >/dev/null 2>&1; then
     dscl . -create /Users/$USER_NAME NFSHomeDirectory "/Library/Application Support/HomeAssistant"
     dscl . -create /Users/$USER_NAME RealName "Home Assistant Daemon"
     dscl . -create /Users/$USER_NAME RecordName $USER_NAME
-    # Cacher l'utilisateur de la fenêtre de login
+    # Hide user from login window
     dscl . -create /Users/$USER_NAME IsHidden 1
 fi
 
-# Arrête proprement l'ancien service si présent (upgrade/réinstall)
+# Stop existing service if present (upgrade/reinstall)
 if [ -f "$LAUNCHD_PLIST" ]; then
   launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
   launchctl unload -w "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
 fi
-pkill -f "/usr/local/bin/homeassistant-macos" >/dev/null 2>&1 || true
+# pkill -f "/usr/local/bin/homeassistant-macos" >/dev/null 2>&1 || true (Obsolete)
 pkill -f "/opt/homeassistant/bin/hass" >/dev/null 2>&1 || true
 
 exit 0

@@ -1,30 +1,30 @@
-# Home Assistant Desktop for macOS - Configuration par défaut
-# Configuration optimisée pour macOS avec intégrations natives
+# Home Assistant Desktop for macOS - Default Configuration
+# Optimized configuration for macOS with native integrations
 
 homeassistant:
-  # Informations de base
-  name: Maison
-  country: FR
-  language: fr
-  time_zone: Europe/Paris
+  # Basic Information
+  name: Home
+  country: US
+  language: en
+  time_zone: UTC
   
-  # Configuration macOS spécifique
+  # macOS Specific Configuration
   internal_url: "http://homeassistant.local:8123"
   external_url: "https://homeassistant.local:8123"
   
-  # Configuration de sécurité
+  # Security Configuration
   allowlist_external_dirs:
     - "/Library/Application Support/HomeAssistant"
     - "/Library/Logs/HomeAssistant"
   
-  # Configuration avancée
+  # Advanced Configuration
   debug: false
   log_level: info
 
 default_config:
 
 
-# Configuration du logger pour macOS
+# Logger configuration for macOS
 logger:
   default: info
   logs:
@@ -33,15 +33,15 @@ logger:
     homeassistant.helpers.script: warning
     homeassistant.components.zeroconf: debug
 
-# Découverte automatique des appareils
+# Automatic device discovery
 discovery:
 
-# Configuration Zeroconf/Bonjour pour macOS
+# Zeroconf/Bonjour configuration for macOS
 zeroconf:
-  # Activer la découverte via Bonjour
+  # Enable discovery via Bonjour
   default_interface: true
   
-# Configuration HTTP pour macOS
+# HTTP configuration for macOS
 http:
   server_port: 8123
   server_host: '0.0.0.0'
@@ -53,62 +53,62 @@ http:
     - 127.0.0.1
     - ::1
 
-# Configuration Bluetooth pour macOS
+# Bluetooth configuration for macOS
 bluetooth:
-  # Utiliser le Bluetooth natif de macOS
+  # Use native macOS Bluetooth
   adapter: hci0
   scanning_mode: active
 
-# Configuration des capteurs système macOS
+# macOS System Sensors configuration
 sensor:
 
-  # Capteurs macOS spécifiques
+  # macOS Specific Sensors
   - platform: rest
     name: "macOS Version"
     resource: "http://localhost:8123/api/system_info"
     value_template: "{{ value_json.os_version }}"
     scan_interval: 3600
 
-# Configuration des switches macOS
+# macOS Switches configuration
 switch:
-  # Switch système pour macOS
+  # System switch for macOS
   - platform: rest
-    name: "Mode Silencieux"
+    name: "Silent Mode"
     resource: "http://localhost:8123/api/system/silent_mode"
     body_on: '{"silent_mode": true}'
     body_off: '{"silent_mode": false}'
 
-# Configuration des binary sensors macOS
+# macOS Binary Sensors configuration
 binary_sensor:
 
-# Configuration des appareils mobiles
+# Mobile App configuration
 mobile_app:
 
-# Configuration des notifications macOS
+# macOS Notifications configuration
 notify:
-  # Notifications système macOS
+  # macOS System Notifications
   - platform: file
     name: "macOS Notifications"
     filename: "/tmp/ha_notifications.log"
     timestamp: true
 
-# Configuration de l'automatisation
+# Automation configuration
 automation:
-  # Automatisation de démarrage
-  - alias: "Démarrage Home Assistant Desktop"
-    description: "Actions au démarrage de Home Assistant"
+  # Startup automation
+  - alias: "Home Assistant Desktop Startup"
+    description: "Actions on Home Assistant startup"
     trigger:
       - platform: homeassistant
         event: start
     action:
       - service: system_log.write
         data:
-          message: "Home Assistant Desktop for macOS démarré"
+          message: "Home Assistant Desktop for macOS started"
           level: info
 
-  # Automatisation de surveillance système
-  - alias: "Alerte Mémoire Élevée"
-    description: "Alerte lorsque l'utilisation mémoire dépasse 80%"
+  # System monitoring automation
+  - alias: "High Memory Alert"
+    description: "Alert when memory usage exceeds 80%"
     trigger:
       - platform: numeric_state
         entity_id: sensor.memory_use_percent
@@ -116,28 +116,28 @@ automation:
     action:
       - service: notify.persistent_notification
         data:
-          title: "Alerte Mémoire"
-          message: "Utilisation mémoire: {{ states('sensor.memory_use_percent') }}%"
+          title: "Memory Alert"
+          message: "Memory usage: {{ states('sensor.memory_use_percent') }}%"
 
-# Configuration des scripts macOS
+# macOS Scripts configuration
 script:
-  # Script de redémarrage service
+  # Service restart script
   restart_homeassistant:
-    alias: "Redémarrer Home Assistant"
+    alias: "Restart Home Assistant"
     sequence:
       - service: homeassistant.restart
       
-  # Script de mise à jour
+  # Update script
   update_homeassistant:
-    alias: "Mettre à jour Home Assistant"
+    alias: "Update Home Assistant"
     sequence:
       - service: homeassistant.check_config
       - service: homeassistant.reload_core_config
 
-# Configuration des scènes
+# Scene configuration
 scene:
-  # Scènes prédéfinies
-  - name: "Mode Nuit"
+  # Predefined scenes
+  - name: "Night Mode"
     entities:
       light.living_room:
         state: off
@@ -146,26 +146,26 @@ scene:
         state: off
         brightness_pct: 10
 
-# Configuration des groupes
+# Group configuration
 group:
-  # Groupes de capteurs système
+  # System sensor groups
   system_sensors:
-    name: "Capteurs Système"
+    name: "System Sensors"
     entities:
       - sensor.memory_use_percent
       - sensor.processor_use
       - sensor.disk_use_percent
       - sensor.load_1m
       
-  # Groupes de switches système
+  # System switch groups
   system_switches:
-    name: "Contrôles Système"
+    name: "System Controls"
     entities:
-      - switch.mode_silencieux
+      - switch.silent_mode
 
-# Configuration de l'historique
+# Recorder configuration
 recorder:
-  # Base de données optimisée pour macOS
+  # Database optimized for macOS
   db_url: "sqlite:///config/home-assistant.db"
   purge_keep_days: 10
   commit_interval: 10
@@ -178,48 +178,48 @@ recorder:
     entities:
       - sensor.last_boot
 
-# Configuration de l'historique détaillé
+# Detailed history configuration
 history:
 
-# Configuration du journal
+# Logbook configuration
 logbook:
 
-# Configuration de la carte
+# Map configuration
 map:
 
-# Configuration des médias
+# Media source configuration
 media_source:
 
-# Configuration du streaming
+# Streaming configuration
 stream:
 
-# Configuration des tags
+# Tag configuration
 tag:
 
-# Configuration des zones
+# Zone configuration
 zone:
-  # Zone domicile
-  - name: Maison
+  # Home zone
+  - name: Home
     latitude: 48.8566
     longitude: 2.3522
     radius: 100
     icon: mdi:home
 
-# Configuration des entrées/sorties
+# Input/Output configuration
 input_boolean:
-  # Entrées booléennes pour automatisations
-  mode_automatique:
-    name: "Mode Automatique"
+  # Boolean inputs for automations
+  automatic_mode:
+    name: "Automatic Mode"
     initial: true
     
-  mode_vacances:
-    name: "Mode Vacances"
+  vacation_mode:
+    name: "Vacation Mode"
     initial: false
 
 input_number:
-  # Entrées numériques pour configuration
-  temperature_consigne:
-    name: "Température de consigne"
+  # Number inputs for configuration
+  target_temperature:
+    name: "Target Temperature"
     min: 15
     max: 25
     step: 0.5
@@ -227,28 +227,28 @@ input_number:
     icon: mdi:thermometer
 
 input_select:
-  # Entrées de sélection
-  mode_chauffage:
-    name: "Mode de chauffage"
+  # Selection inputs
+  heating_mode:
+    name: "Heating Mode"
     options:
-      - "Arrêt"
-      - "Éco"
-      - "Confort"
-    initial: "Éco"
+      - "Off"
+      - "Eco"
+      - "Comfort"
+    initial: "Eco"
     icon: mdi:radiator
 
-# Configuration des intégrations supplémentaires
+# Additional integrations configuration
 frontend:
-  # Configuration de l'interface web
+  # Web interface configuration
   themes:
-    # Thèmes par défaut pour macOS
+    # Default macOS themes
     default:
       primary-color: "#41B883"
       accent-color: "#35495E"
       dark-primary-color: "#2c3e50"
 
-# Configuration du panneau de configuration
+# Config panel configuration
 config:
 
-# Configuration du journal des erreurs
+# System health configuration
 system_health:

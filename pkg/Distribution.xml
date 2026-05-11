@@ -6,7 +6,7 @@
     <conclusion file="conclusion.html"/>
     <license file="license.txt"/>
     
-    <pkg-ref id="org.homeassistant.desktop" version="1.0.0" onConclusion="none">#homeassistant-core.pkg</pkg-ref>
+    <pkg-ref id="org.homeassistant.desktop" version="3.0.0" onConclusion="none">#homeassistant-core.pkg</pkg-ref>
     
     <choices-outline>
         <line choice="default"/>

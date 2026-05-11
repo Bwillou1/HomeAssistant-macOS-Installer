@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Home Assistant Desktop for macOS - Script de désinstallation
-# Désinstallation complète et propre de l'application
+# Home Assistant Desktop for macOS - Uninstallation Script
+# Complete and clean uninstallation of the application
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Fonctions de logging
+# Logging functions
 log_info() {
     echo "[INFO] $1" >&2
 }
@@ -20,108 +20,131 @@ log_warning() {
     echo "[WARNING] $1" >&2
 }
 
-# Vérification permissions administrateur
+# Check for administrator permissions
 if [ "$(id -u)" -ne 0 ]; then
-    log_error "La désinstallation requiert les permissions administrateur"
-    echo "Utilisez: sudo bash $0"
+    log_error "Uninstallation requires administrator permissions"
+    echo "Use: sudo bash $0"
     exit 1
 fi
 
-log_info "Désinstallation Home Assistant Desktop for macOS"
+KEEP_CONFIG=false
+REMOVE_CONFIG=false
+NON_INTERACTIVE=false
 
-# Confirmation utilisateur
-read -p "Voulez-vous vraiment désinstaller Home Assistant Desktop? (o/N): " -r
-if [[ ! $REPLY =~ ^[Oo]$ ]]; then
-    log_info "Désinstallation annulée"
-    exit 0
+# Parsing arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --keep-config) KEEP_CONFIG=true ;;
+        --remove-config) REMOVE_CONFIG=true ;;
+        --non-interactive) NON_INTERACTIVE=true ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+log_info "Uninstalling Home Assistant Desktop for macOS (vVERSION_PLACEHOLDER)"
+
+# User confirmation
+if [ "$NON_INTERACTIVE" = false ] && [ "$KEEP_CONFIG" = false ] && [ "$REMOVE_CONFIG" = false ]; then
+    read -p "Do you really want to uninstall Home Assistant Desktop? (y/N): " -r
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Uninstallation cancelled"
+        exit 0
+    fi
 fi
 
-# 1. Arrêt du service
-log_info "Arrêt du service Home Assistant..."
+# 1. Stop the service
+log_info "Stopping Home Assistant service..."
 if launchctl list | grep -q "org.homeassistant.daemon"; then
     launchctl unload -w /Library/LaunchDaemons/org.homeassistant.daemon.plist 2>/dev/null || true
     sleep 2
 fi
 
-# 2. Arrêt forcé des processus
-log_info "Arrêt des processus Home Assistant..."
+# 2. Force stop processes
+log_info "Stopping Home Assistant processes..."
 pkill -f "homeassistant-macos" 2>/dev/null || true
 pkill -f "homeassistant" 2>/dev/null || true
 pkill -f "hass" 2>/dev/null || true
 
-# 3. Sauvegarde optionnelle de la configuration
-read -p "Voulez-vous sauvegarder la configuration? (o/N): " -r
-if [[ $REPLY =~ ^[Oo]$ ]]; then
-    BACKUP_DIR="$HOME/Desktop/HomeAssistant-Backup-$(date +%Y%m%d-%H%M%S)"
-    log_info "Sauvegarde de la configuration dans $BACKUP_DIR..."
-    if [ -d "/Library/Application Support/HomeAssistant" ]; then
-        mkdir -p "$BACKUP_DIR"
-        cp -r "/Library/Application Support/HomeAssistant/config" "$BACKUP_DIR/" 2>/dev/null || true
-        cp -r "/Library/Application Support/HomeAssistant/deps" "$BACKUP_DIR/" 2>/dev/null || true
-        log_info "Configuration sauvegardée"
+# 3. Optional configuration backup
+if [ "$REMOVE_CONFIG" = true ]; then
+    log_info "Removing configuration as requested (--remove-config)"
+elif [ "$KEEP_CONFIG" = true ]; then
+    log_info "Keeping configuration as requested (--keep-config)"
+elif [ "$NON_INTERACTIVE" = true ]; then
+    log_info "Non-interactive mode: keeping configuration by default"
+    KEEP_CONFIG=true
+else
+    read -p "Do you want to backup the configuration before removal? (y/N): " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        BACKUP_DIR="/Users/Shared/HomeAssistant-Backup-$(date +%Y%m%d-%H%M%S)"
+        log_info "Backing up configuration to $BACKUP_DIR..."
+        if [ -d "/Library/Application Support/HomeAssistant" ]; then
+            mkdir -p "$BACKUP_DIR"
+            cp -r "/Library/Application Support/HomeAssistant/config" "$BACKUP_DIR/" 2>/dev/null || true
+            log_info "Configuration backed up to $BACKUP_DIR"
+        fi
+        REMOVE_CONFIG=true
+    else
+        read -p "Do you want to PERMANENTLY DELETE the configuration? (y/N): " -r
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            REMOVE_CONFIG=true
+        else
+            KEEP_CONFIG=true
+        fi
     fi
 fi
 
-# 4. Suppression des fichiers binaires
-log_info "Suppression des fichiers binaires..."
-rm -f /usr/local/bin/homeassistant-macos 2>/dev/null || true
-rm -f /usr/local/bin/hass 2>/dev/null || true
-rm -f /usr/local/bin/homeassistant 2>/dev/null || true
+# 4. Remove binary files
+log_info "Removing binary files in /opt/homeassistant..."
+rm -rf /opt/homeassistant 2>/dev/null || true
 
-# 5. Suppression du LaunchDaemon
-log_info "Suppression du service système..."
+# 5. Remove LaunchDaemon
+log_info "Removing system service..."
 rm -f /Library/LaunchDaemons/org.homeassistant.daemon.plist 2>/dev/null || true
 
-# 6. Suppression des répertoires de données
-log_info "Suppression des répertoires de données..."
-if [ -d "/Library/Application Support/HomeAssistant" ]; then
-    rm -rf "/Library/Application Support/HomeAssistant" 2>/dev/null || true
+# 6. Remove data directories
+if [ "$REMOVE_CONFIG" = true ]; then
+    log_info "Removing data directories..."
+    if [ -d "/Library/Application Support/HomeAssistant" ]; then
+        rm -rf "/Library/Application Support/HomeAssistant" 2>/dev/null || true
+    fi
+else
+    log_info "Preserving user data in /Library/Application Support/HomeAssistant"
 fi
 
 if [ -d "/Library/Logs/HomeAssistant" ]; then
     rm -rf "/Library/Logs/HomeAssistant" 2>/dev/null || true
 fi
 
-# 7. Suppression des fichiers de configuration système
-log_info "Suppression des fichiers de configuration système..."
+# 7. Remove system configuration files
+log_info "Removing system configuration files..."
 rm -f /usr/local/share/homeassistant/sandbox-profile.sb 2>/dev/null || true
 rm -f /etc/pf.anchors/homeassistant 2>/dev/null || true
 
-# 8. Nettoyage des permissions TCC
-log_info "Nettoyage des permissions TCC..."
-TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
-if [ -f "$TCC_DB" ]; then
-    # Suppression des entrées Home Assistant de la base TCC
-    sqlite3 "$TCC_DB" "DELETE FROM access WHERE client = 'org.homeassistant.daemon';" 2>/dev/null || true
-    log_info "Permissions TCC nettoyées"
-fi
+# 8. Clean TCC permissions (Note: SIP prevents direct removal)
+log_info "Note: Bluetooth/File permissions must be reset manually."
+log_info "Use: tccutil reset Bluetooth org.homeassistant.desktop"
 
-# 9. Nettoyage du firewall
-log_info "Nettoyage des règles du firewall..."
-if [ -f "/etc/pf.conf" ]; then
-    # Suppression des règles Home Assistant
-    sed -i '' '/homeassistant/d' /etc/pf.conf 2>/dev/null || true
-    
-    # Rechargement du firewall
-    pfctl -f /etc/pf.conf 2>/dev/null || true
-    log_info "Règles firewall supprimées"
-fi
+# 9. Clean firewall (Optional)
+# log_info "Cleaning firewall rules..."
+# Rules are no longer added by default to /etc/pf.conf to avoid brittleness.
 
-# 10. Nettoyage des fichiers temporaires
-log_info "Nettoyage des fichiers temporaires..."
+# 10. Clean temporary files
+log_info "Cleaning temporary files..."
 rm -f /tmp/ha_notifications.log 2>/dev/null || true
 rm -rf /tmp/homeassistant-* 2>/dev/null || true
 
-# 11. Suppression des entrées launchd restantes
-log_info "Nettoyage des entrées launchd..."
+# 11. Remove remaining launchd entries
+log_info "Cleaning launchd entries..."
 launchctl remove org.homeassistant.daemon 2>/dev/null || true
 
-# 12. Vérification de la désinstallation
-log_info "Vérification de la désinstallation..."
+# 12. Verification of uninstallation
+log_info "Verifying uninstallation..."
 
 REMAINING_FILES=""
 
-# Vérification des fichiers restants
+# Check for remaining files
 if [ -f "/usr/local/bin/homeassistant-macos" ]; then
     REMAINING_FILES="$REMAINING_FILES /usr/local/bin/homeassistant-macos"
 fi
@@ -139,19 +162,19 @@ if [ -d "/Library/Logs/HomeAssistant" ]; then
 fi
 
 if [ -n "$REMAINING_FILES" ]; then
-    log_warning "Certains fichiers n'ont pas pu être supprimés:"
+    log_warning "Some files could not be removed:"
     echo "$REMAINING_FILES"
-    log_warning "Vous pouvez les supprimer manuellement si nécessaire"
+    log_warning "You can remove them manually if necessary"
 else
-    log_info "Désinstallation terminée avec succès"
+    log_info "Uninstallation completed successfully"
 fi
 
-# 13. Nettoyage final
-log_info "Nettoyage final..."
-# Suppression des entrées crontab éventuelles
+# 13. Final cleanup
+log_info "Final cleanup..."
+# Remove any crontab entries
 crontab -l 2>/dev/null | grep -v homeassistant | crontab - 2>/dev/null || true
 
-# Suppression des services utilisateurs éventuels
+# Remove any user services
 for user in $(ls /Users); do
     if [ -f "/Users/$user/Library/LaunchAgents/org.homeassistant.agent.plist" ]; then
         rm -f "/Users/$user/Library/LaunchAgents/org.homeassistant.agent.plist"
@@ -159,7 +182,7 @@ for user in $(ls /Users); do
     fi
 done
 
-log_info "Home Assistant Desktop for macOS a été désinstallé"
-log_info "Redémarrez votre Mac pour finaliser la désinstallation"
+log_info "Home Assistant Desktop for macOS has been uninstalled"
+log_info "Restart your Mac to finalize the uninstallation"
 
 exit 0

@@ -13,9 +13,13 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
+        <string>/opt/homeassistant/bin/hass</string>
         <string>-c</string>
-        <string>rm -f "/Library/Application Support/HomeAssistant/config/.ha_run.lock" &amp;&amp; exec /opt/homeassistant/bin/hass -c "/Library/Application Support/HomeAssistant/config" --log-file "/Library/Logs/HomeAssistant/home-assistant.log" --log-rotate-days 7</string>
+        <string>/Library/Application Support/HomeAssistant/config</string>
+        <string>--log-file</string>
+        <string>/Library/Logs/HomeAssistant/home-assistant.log</string>
+        <string>--log-rotate-days</string>
+        <string>7</string>
     </array>
 
     <key>RunAtLoad</key>
