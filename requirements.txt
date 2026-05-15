@@ -1,5 +1,5 @@
 # Home Assistant Core
-homeassistant>=2024.1.0
+homeassistant>=2026.5.1
 home-assistant-frontend
 
 # macOS specific dependencies
