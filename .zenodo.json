@@ -1,0 +1,12 @@
+{
+  "title": "Home Assistant macOS Installer",
+  "description": "A native standalone installer and background service runner for Home Assistant on macOS.",
+  "creators": [
+    {
+      "name": "Guindon, William",
+      "orcid": "0009-0009-8845-4456"
+    }
+  ],
+  "access_right": "open",
+  "license": "Appalache2"
+}
