@@ -1,5 +1,5 @@
 # Home Assistant Native macOS Installer 🍏🏡
-
+[![DOI](https://zenodo.org/badge/8475.svg)](https://zenodo.org/badge/latestdoi/8475)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Platform](https://img.shields.io/badge/Platform-macOS-lightgrey.svg)](#)
 [![Version](https://img.shields.io/badge/Version-3.0.0-green.svg)](#)
