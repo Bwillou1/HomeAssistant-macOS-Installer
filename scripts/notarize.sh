@@ -37,7 +37,7 @@ RESULT=$(xcrun altool \
     --output-format json)
 
 # Extraction du UUID de la requête
-REQUEST_UUID=$(echo "$RESULT" | jq -r '.notarization-upload.RequestUUID')
+REQUEST_UUID=$(echo "$RESULT" | jq -r '."notarization-upload".RequestUUID')
 
 if [ "$REQUEST_UUID" = "null" ] || [ -z "$REQUEST_UUID" ]; then
     echo "❌ Échec de la soumission"
@@ -58,7 +58,7 @@ while true; do
         --password "$APPLE_PASSWORD" \
         --output-format json)
     
-    STATUS=$(echo "$STATUS_RESULT" | jq -r '.notarization-info.Status')
+    STATUS=$(echo "$STATUS_RESULT" | jq -r '."notarization-info".Status')
     
     echo "📊 Statut: $STATUS"
     
@@ -67,11 +67,7 @@ while true; do
             echo "✅ Notarisation réussie!"
             
             # Téléchargement du ticket de notarisation
-            xcrun altool \
-                --notarization-info "$REQUEST_UUID" \
-                --username "$APPLE_ID" \
-                --password "$APPLE_PASSWORD" \
-                --output-format json | jq -r '.notarization-info.LogFileURL'
+            echo "$STATUS_RESULT" | jq -r '."notarization-info".LogFileURL'
             
             # Stapling du ticket au package
             xcrun stapler staple "$PKG_PATH"
