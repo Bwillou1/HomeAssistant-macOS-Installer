@@ -37,6 +37,11 @@ build:
 	$(HA_OPT_DIR)/bin/pip install --upgrade pip
 	$(HA_OPT_DIR)/bin/pip install -r requirements.txt
 	
+	# Patch system_info.py pour masquer l'avertissement d'obsolescence Core
+	@echo "Patch de l'avertissement d'installation Core..."
+	@find $(HA_OPT_DIR)/lib -name "system_info.py" -type f -exec sed -i.bak 's/"Home Assistant Core"/"Home Assistant Native macOS"/g' {} + || true
+	@find $(HA_OPT_DIR)/lib -name "system_info.py.bak" -type f -delete || true
+
 	# Fixes applied during packaging step to avoid breaking local venv
 	@echo "Build complete: $(HA_OPT_DIR)"
 
