@@ -13,7 +13,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/homeassistant/bin/hass</string>
+        <string>/opt/homeassistant/venv/bin/hass</string>
         <string>-c</string>
         <string>/Library/Application Support/HomeAssistant/config</string>
         <string>--log-file</string>
@@ -49,7 +49,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/opt/homeassistant/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <string>/opt/homeassistant/venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
         <key>FFMPEG_HWACCEL</key>
         <string>videotoolbox</string>
     </dict>

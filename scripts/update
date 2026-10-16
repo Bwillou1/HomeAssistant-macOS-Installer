@@ -1,0 +1,133 @@
+#!/bin/bash
+# Transactional daily/manual update to the newest stable Home Assistant Core.
+# This updates Core in the venv; it does NOT install or update Home Assistant OS.
+set -euo pipefail
+
+readonly ROOT="/opt/homeassistant"
+readonly ENV="$ROOT/venv"
+readonly NEW_ENV="$ROOT/venv.next"
+readonly OLD_ENV="$ROOT/venv.previous"
+readonly CONFIG_DIR="/Library/Application Support/HomeAssistant"
+readonly CONFIG="$CONFIG_DIR/config"
+readonly BACKUP_DIR="/Library/Application Support/HomeAssistant-Backups"
+readonly HA_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+readonly HA_LABEL="system/org.homeassistant.daemon"
+readonly LOCK_DIR="/var/run/org.homeassistant.update.lock"
+readonly HA_USER="_homeassistant"
+readonly HA_GROUP="_homeassistant"
+
+log() { echo "[HomeAssistant update] $(date '+%Y-%m-%d %H:%M:%S') $*" >&2; }
+fail() { log "ERROR: $*"; exit 1; }
+
+[[ "$(id -u)" -eq 0 ]] || fail "Run with sudo."
+[[ -x "$ENV/bin/python" && -x "$ENV/bin/uv" ]] || fail "Installed relocatable Python environment or uv is missing. Reinstall the latest package."
+# Determine the stable version published on PyPI; reject prereleases/dev builds.
+LATEST=$("$ENV/bin/python" - <<'PY'
+import json, re, urllib.request
+url = "https://pypi.org/pypi/homeassistant/json"
+request = urllib.request.Request(url, headers={"User-Agent": "HomeAssistant-macOS-Installer/VERSION_PLACEHOLDER"})
+with urllib.request.urlopen(request, timeout=30) as response:
+    releases = json.load(response)["releases"]
+versions = []
+for version, files in releases.items():
+    if re.fullmatch(r"\d{4}\.\d+\.\d+", version) and any(not item.get("yanked", False) for item in files):
+        versions.append(tuple(int(part) for part in version.split(".")))
+if not versions:
+    raise SystemExit("No stable Home Assistant release found on PyPI")
+print(".".join(map(str, max(versions))))
+PY
+) || fail "Could not query PyPI for the latest stable Home Assistant release"
+CURRENT=$("$ENV/bin/python" -c 'from importlib.metadata import version; print(version("homeassistant"))')
+if [[ "$LATEST" == "$CURRENT" ]]; then
+  log "Already on latest stable Home Assistant Core $CURRENT; no action needed."
+  exit 0
+fi
+
+BASE_HOME=$(sed -n 's/^home = //p' "$ENV/pyvenv.cfg" | head -1)
+[[ -n "$BASE_HOME" && -x "$BASE_HOME/python3.14" ]] || fail "Bundled Python runtime not found; cannot safely update."
+BASE_PYTHON="$BASE_HOME/python3.14"
+[[ -x "$ROOT/relocate_venv.py" ]] || fail "Relocation helper missing; reinstall the latest package."
+
+mkdir "$LOCK_DIR" 2>/dev/null || fail "Another update is already running (lock: $LOCK_DIR)."
+WAS_RUNNING=0
+SWAPPED=0
+if launchctl print "$HA_LABEL" 2>/dev/null | grep -q 'state = running'; then WAS_RUNNING=1; fi
+
+cleanup() {
+  status=$?
+  if [[ "$status" -ne 0 && "$SWAPPED" -eq 1 ]]; then
+    log "Update failed after switch; restoring the previous environment."
+    launchctl bootout "$HA_LABEL" >/dev/null 2>&1 || true
+    rm -rf "$ENV"
+    if [[ -d "$OLD_ENV" ]]; then mv "$OLD_ENV" "$ENV"; fi
+    chown -R root:wheel "$ENV" 2>/dev/null || true
+    chmod -R go-w "$ENV" 2>/dev/null || true
+    if [[ "$WAS_RUNNING" -eq 1 ]]; then
+      launchctl bootstrap system "$HA_PLIST" >/dev/null 2>&1 || log "ERROR: Could not restart rolled-back service."
+    fi
+  elif [[ "$status" -ne 0 && "$WAS_RUNNING" -eq 1 ]]; then
+    launchctl bootstrap system "$HA_PLIST" >/dev/null 2>&1 || true
+  fi
+  rm -rf "$NEW_ENV"
+  rmdir "$LOCK_DIR" 2>/dev/null || true
+  exit "$status"
+}
+trap cleanup EXIT
+
+if [[ "$WAS_RUNNING" -eq 1 ]]; then
+  log "Stopping Home Assistant Core $CURRENT before upgrade to $LATEST."
+  launchctl bootout "$HA_LABEL"
+fi
+
+# Back up configuration (including .storage and the SQLite database) before
+# changing Core. Keep backups private; prune snapshots older than 30 days below.
+mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
+backup="$BACKUP_DIR/config-before-${CURRENT}-$(date '+%Y%m%d-%H%M%S').tar.gz"
+tar -czf "$backup" -C "$CONFIG_DIR" config
+chmod 600 "$backup"
+# Avoid unbounded disk growth: keep config snapshots for the last 30 days.
+find "$BACKUP_DIR" -type f -name 'config-before-*.tar.gz' -mtime +30 -delete
+log "Configuration backup created: $backup"
+
+rm -rf "$NEW_ENV"
+mkdir "$NEW_ENV"
+chown "$HA_USER:$HA_GROUP" "$NEW_ENV"
+log "Preparing Core $LATEST in a separate environment; installed Core remains untouched."
+sudo -u "$HA_USER" "$ENV/bin/uv" venv --relocatable --python "$BASE_PYTHON" "$NEW_ENV"
+sudo -u "$HA_USER" "$ENV/bin/uv" pip install --python "$NEW_ENV/bin/python" \
+  "homeassistant==$LATEST" \
+  "pyobjc-framework-CoreBluetooth; sys_platform == 'darwin'" \
+  "pyobjc-framework-CoreWLAN; sys_platform == 'darwin'" \
+  "pyobjc-framework-SystemConfiguration; sys_platform == 'darwin'"
+# The staging venv is writable by the service account during package resolution.
+# Make it root-owned before any root process inspects or rewrites its contents.
+chown -R root:wheel "$NEW_ENV"
+chmod -R go-w "$NEW_ENV"
+"$BASE_PYTHON" "$ROOT/relocate_venv.py" "$ROOT" --venv-dir venv.next --prefix "$ROOT"
+
+installed=$($NEW_ENV/bin/python -c 'from importlib.metadata import version; print(version("homeassistant"))')
+[[ "$installed" == "$LATEST" ]] || fail "Prepared Core version mismatch: expected $LATEST, got $installed"
+sudo -u "$HA_USER" "$NEW_ENV/bin/hass" --script check_config --config "$CONFIG" || fail "Configuration check failed; current Core was not replaced."
+
+rm -rf "$OLD_ENV"
+mv "$ENV" "$OLD_ENV"
+mv "$NEW_ENV" "$ENV"
+chown -R root:wheel "$ENV"
+chmod -R go-w "$ENV"
+SWAPPED=1
+
+if [[ "$WAS_RUNNING" -eq 1 ]]; then
+  launchctl bootstrap system "$HA_PLIST"
+  log "Waiting for Home Assistant Core $LATEST to become healthy..."
+  healthy=0
+  for attempt in $(seq 1 120); do
+    if curl --fail --silent http://127.0.0.1:8123/ >/dev/null; then healthy=1; break; fi
+    sleep 2
+  done
+  [[ "$healthy" -eq 1 ]] || fail "Updated Core did not respond on port 8123 within four minutes."
+fi
+
+SWAPPED=0
+rm -rf "$OLD_ENV"
+log "Updated Home Assistant Core from $CURRENT to $LATEST successfully. Configuration backup is preserved."

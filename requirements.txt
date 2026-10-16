@@ -1,34 +1,7 @@
-# Home Assistant Core
-homeassistant>=2026.5.3
-home-assistant-frontend
+# Exact Home Assistant Core release tested by the project.
+homeassistant==2026.10.2
 
-# macOS specific dependencies
-pyobjc-framework-CoreBluetooth
-pyobjc-framework-CoreWLAN
-pyobjc-framework-SystemConfiguration
-
-# Network and discovery
-zeroconf
-aiohttp
-cryptography
-
-# Database and storage
-sqlalchemy
-aiosqlite
-
-# Image processing
-Pillow
-PyTurboJPEG
-
-# System monitoring
-psutil
-
-# Voice and Audio pipeline
-ha-ffmpeg
-mutagen
-hassil
-pymicro-vad
-git+https://github.com/rhasspy/pyspeex-noise.git
-
-# Build dependencies
-setuptools
+# Optional macOS frameworks used by selected native integrations.
+pyobjc-framework-CoreBluetooth; sys_platform == "darwin"
+pyobjc-framework-CoreWLAN; sys_platform == "darwin"
+pyobjc-framework-SystemConfiguration; sys_platform == "darwin"

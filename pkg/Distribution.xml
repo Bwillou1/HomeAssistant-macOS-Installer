@@ -1,17 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <installer-gui-script minSpecVersion="1.0">
-    <title>Home Assistant Desktop for macOS</title>
+    <title>Home Assistant Core macOS Community Installer</title>
     <options customize="never" rootVolumeOnly="true"/>
     <welcome file="welcome.html"/>
     <conclusion file="conclusion.html"/>
     <license file="license.txt"/>
-    
-    <pkg-ref id="org.homeassistant.desktop" version="3.0.0" onConclusion="none">#homeassistant-core.pkg</pkg-ref>
-    
+
+    <installation-check script="installation_check()"/>
+    <script>
+        <![CDATA[
+        function installation_check() {
+            if (system.compareVersions(system.version.ProductVersion, '13.0') < 0) {
+                my.result.title = 'macOS version not supported';
+                my.result.message = 'This community package requires macOS 13.0 or later.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            if (system.hardware.architecture != 'ARCH_PLACEHOLDER') {
+                my.result.title = 'Wrong architecture package';
+                my.result.message = 'This package was built for ARCH_PLACEHOLDER. Download the package for this Mac architecture.';
+                my.result.type = 'Fatal';
+                return false;
+            }
+            return true;
+        }
+        ]]>
+    </script>
+
+    <pkg-ref id="org.homeassistant.desktop" version="VERSION_PLACEHOLDER" onConclusion="none">#homeassistant-core.pkg</pkg-ref>
     <choices-outline>
         <line choice="default"/>
     </choices-outline>
-    <choice id="default" title="Home Assistant Desktop">
+    <choice id="default" title="Home Assistant Core (community package)">
         <pkg-ref id="org.homeassistant.desktop"/>
     </choice>
 </installer-gui-script>

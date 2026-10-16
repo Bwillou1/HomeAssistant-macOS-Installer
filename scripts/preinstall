@@ -1,61 +1,59 @@
 #!/bin/bash
 set -euo pipefail
 
-LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
-USER_NAME="_homeassistant"
-GROUP_NAME="_homeassistant"
+readonly LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+readonly USER_NAME="_homeassistant"
+readonly GROUP_NAME="_homeassistant"
 
-echo "[INFO] Pre-installing Home Assistant Desktop for macOS (vVERSION_PLACEHOLDER)" >&2
+log() { echo "[HomeAssistant installer] $*" >&2; }
+fail() { log "ERROR: $*"; exit 1; }
 
-# Check existing version
-EXISTING_VERSION_FILE="/opt/homeassistant/VERSION"
-if [ -f "$EXISTING_VERSION_FILE" ]; then
-    EXISTING_VERSION=$(cat "$EXISTING_VERSION_FILE")
-    echo "[INFO] Existing version detected: $EXISTING_VERSION" >&2
-    if [ "$EXISTING_VERSION" == "VERSION_PLACEHOLDER" ]; then
-        echo "[INFO] Version VERSION_PLACEHOLDER is already installed. Forced reinstallation." >&2
+log "Preparing Home Assistant macOS installer (vVERSION_PLACEHOLDER)"
+
+# Allocate a daemon UID/GID from Apple's reserved system-account range, but
+# always ask Directory Services whether the numeric ID is already occupied.
+find_free_id() {
+  local record_type="$1" attribute="$2" candidate
+  for candidate in $(seq 400 499); do
+    if ! dscl . -list "/$record_type" "$attribute" 2>/dev/null | awk -v id="$candidate" '$2 == id { found=1 } END { exit found ? 0 : 1 }'; then
+      printf '%s\n' "$candidate"
+      return 0
     fi
+  done
+  return 1
+}
+
+if ! dscl . -read "/Groups/$GROUP_NAME" >/dev/null 2>&1; then
+  gid=$(find_free_id Groups PrimaryGroupID) || fail "No free system group ID is available in 400-499"
+  dscl . -create "/Groups/$GROUP_NAME"
+  dscl . -create "/Groups/$GROUP_NAME" PrimaryGroupID "$gid"
+  dscl . -create "/Groups/$GROUP_NAME" RealName "Home Assistant Service Group"
+  dscl . -create "/Groups/$GROUP_NAME" RecordName "$GROUP_NAME"
 fi
 
-# Create group if it doesn't exist
-if ! dscl . -read /Groups/$GROUP_NAME >/dev/null 2>&1; then
-    echo "[INFO] Creating system group $GROUP_NAME" >&2
-    # Find a free GID between 400 and 499 (standard for macOS daemon groups)
-    GID=400
-    while dscl . -read /Groups/gid_$GID >/dev/null 2>&1 || dscl . -search /Groups PrimaryGroupID $GID | grep -q $GID; do
-        GID=$((GID+1))
-    done
-    dscl . -create /Groups/$GROUP_NAME
-    dscl . -create /Groups/$GROUP_NAME PrimaryGroupID $GID
-    dscl . -create /Groups/$GROUP_NAME RealName "Home Assistant Group"
-    dscl . -create /Groups/$GROUP_NAME RecordName $GROUP_NAME
+gid=$(dscl . -read "/Groups/$GROUP_NAME" PrimaryGroupID | awk '{print $2}')
+[[ "$gid" =~ ^[0-9]+$ ]] || fail "Could not read a valid primary group ID for $GROUP_NAME"
+
+if ! dscl . -read "/Users/$USER_NAME" >/dev/null 2>&1; then
+  uid=$(find_free_id Users UniqueID) || fail "No free system user ID is available in 400-499"
+  dscl . -create "/Users/$USER_NAME"
+  dscl . -create "/Users/$USER_NAME" UniqueID "$uid"
+  dscl . -create "/Users/$USER_NAME" PrimaryGroupID "$gid"
+  dscl . -create "/Users/$USER_NAME" UserShell /usr/bin/false
+  dscl . -create "/Users/$USER_NAME" NFSHomeDirectory "/Library/Application Support/HomeAssistant"
+  dscl . -create "/Users/$USER_NAME" RealName "Home Assistant Service"
+  dscl . -create "/Users/$USER_NAME" RecordName "$USER_NAME"
+  dscl . -create "/Users/$USER_NAME" IsHidden 1
+else
+  existing_gid=$(dscl . -read "/Users/$USER_NAME" PrimaryGroupID | awk '{print $2}')
+  [[ "$existing_gid" == "$gid" ]] || fail "Existing $USER_NAME account has unexpected primary group ID"
 fi
 
-# Create user if it doesn't exist
-if ! dscl . -read /Users/$USER_NAME >/dev/null 2>&1; then
-    echo "[INFO] Creating system user $USER_NAME" >&2
-    # Find a free UID between 400 and 499 (standard for macOS daemon users)
-    UID_VAL=400
-    while dscl . -read /Users/uid_$UID_VAL >/dev/null 2>&1 || dscl . -search /Users UniqueID $UID_VAL | grep -q $UID_VAL; do
-        UID_VAL=$((UID_VAL+1))
-    done
-    dscl . -create /Users/$USER_NAME
-    dscl . -create /Users/$USER_NAME UniqueID $UID_VAL
-    dscl . -create /Users/$USER_NAME PrimaryGroupID $(dscl . -read /Groups/$GROUP_NAME PrimaryGroupID | awk '{print $2}')
-    dscl . -create /Users/$USER_NAME UserShell /usr/bin/false
-    dscl . -create /Users/$USER_NAME NFSHomeDirectory "/Library/Application Support/HomeAssistant"
-    dscl . -create /Users/$USER_NAME RealName "Home Assistant Daemon"
-    dscl . -create /Users/$USER_NAME RecordName $USER_NAME
-    # Hide user from login window
-    dscl . -create /Users/$USER_NAME IsHidden 1
-fi
+# Stop only this installer’s LaunchDaemons before replacing their payloads.
+launchctl bootout system /Library/LaunchDaemons/org.homeassistant.updater.plist >/dev/null 2>&1 || true
+launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
+launchctl bootout system/org.homeassistant.daemon >/dev/null 2>&1 || true
 
-# Stop existing service if present (upgrade/reinstall)
-if [ -f "$LAUNCHD_PLIST" ]; then
-  launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
-  launchctl unload -w "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
-fi
-# pkill -f "/usr/local/bin/homeassistant-macos" >/dev/null 2>&1 || true (Obsolete)
-pkill -f "/opt/homeassistant/bin/hass" >/dev/null 2>&1 || true
-
-exit 0
+# Preserve existing user configuration. Installation payload only replaces
+# /opt/homeassistant and the service plist; no user data lives there.
+log "Pre-install checks complete"
