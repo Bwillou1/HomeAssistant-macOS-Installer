@@ -1,0 +1,66 @@
+name: Validate and build installer
+
+on:
+  pull_request:
+  push:
+    branches: [main, "arena/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Static packaging checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Validate packaging contract
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate shell syntax
+        run: bash -n scripts/preinstall scripts/postinstall scripts/uninstall scripts/sign.sh scripts/notarize.sh
+
+  macos-build-and-install:
+    name: Build and install smoke test (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: Apple Silicon
+            runner: macos-14
+            machine: arm64
+          - arch: Intel
+            runner: macos-15-intel
+            machine: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify runner architecture
+        run: test "$(uname -m)" = "${{ matrix.machine }}"
+      - name: Install package build prerequisites
+        run: brew install uv ffmpeg autoconf cmake
+      - name: Build package
+        run: make all
+      - name: Install and verify Home Assistant starts
+        run: |
+          sudo installer -pkg "dist/HomeAssistant-macOS-$(cat VERSION)-$(uname -m).pkg" -target /
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent --show-error http://127.0.0.1:8123/ >/dev/null; then
+              echo "Home Assistant HTTP endpoint responded after ${attempt} checks"
+              break
+            fi
+            if [ "$attempt" -eq 90 ]; then
+              sudo launchctl print system/org.homeassistant.daemon || true
+              sudo tail -200 /Library/Logs/HomeAssistant/daemon.error.log || true
+              sudo tail -200 /Library/Logs/HomeAssistant/home-assistant.log || true
+              exit 1
+            fi
+            sleep 2
+          done
+      - name: Verify uninstaller preserves data by default
+        if: always()
+        run: |
+          if [ -x /opt/homeassistant/uninstall ]; then
+            sudo /opt/homeassistant/uninstall --keep-config --non-interactive
+          fi

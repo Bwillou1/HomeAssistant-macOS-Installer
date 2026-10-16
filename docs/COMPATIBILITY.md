@@ -1,82 +1,20 @@
-# Compatibilité Home Assistant Desktop macOS
+# Compatibilité
 
-## Architecture Support
+## État vérifié
 
-### ✅ Apple Silicon (M1/M2/M3/M4)
-- **Statut**: Pleinement compatible
-- **Architecture**: ARM64 (native)
-- **Performance**: Optimale
-- **Installation**: Direct via package .pkg
+Le projet construit un environnement Python `venv` et l'exécutable Home Assistant Core; ce n'est ni une application macOS compilée, ni un binaire universel. Le build doit être effectué sur macOS avec la même architecture que la machine cible. Intel et Apple Silicon doivent donc être validés séparément; Rosetta ne rend pas un environnement Python natif universel.
 
-### ⚠️ Intel Mac (x86_64)
-- **Statut**: Compatible via Rosetta 2
-- **Architecture**: x86_64 (traduction dynamique)
-- **Performance**: Légère dégradation (~5-10%)
-- **Installation**: Fonctionnel avec traduction automatique
+Le build utilise maintenant un runtime CPython redistribuable `python-build-standalone`, installé par `uv`, et le place dans `/opt/homeassistant/python` à côté du venv relocatable `/opt/homeassistant/venv`. Cela supprime la dépendance au Python de l'ordinateur de build, mais ne prouve pas à lui seul que chaque extension native fonctionne sur tous les Macs. Les builds sont séparés par architecture et doivent être installés/testés sur une machine propre Intel et Apple Silicon avant publication.
 
-## Détails Techniques
+La version minimale de Home Assistant est fixée dans `requirements.txt`. Les versions macOS/Python réellement prises en charge dépendent des exigences déclarées par Home Assistant et des dépendances installables sur l'OS ciblé. Le projet ne prétend pas à une validation matérielle ou système qui n'a pas été effectuée.
 
-### Package Actuel
-- **Format**: Mach-O 64-bit executable arm64
-- **Taille**: 53.9 MB
-- **Compression**: xar archive avec zlib
-- **Signature**: Prêt pour signature développeur
+## Limites connues
 
-### Traduction d'Architecture
-macOS utilise Rosetta 2 pour traduire automatiquement les binaires ARM64 vers x86_64 sur les Mac Intel. Cette traduction est transparente pour l'utilisateur.
+- Les intégrations nécessitant des droits système/macOS ou des composants matériels peuvent demander des réglages supplémentaires.
+- Le service s'exécute comme utilisateur système restreint; les accès Bluetooth et USB peuvent ne pas être disponibles à cet utilisateur.
+- Le paquet n'est pas signé ni notarié par défaut. Gatekeeper peut bloquer son ouverture. Ne contournez les protections que si vous avez vérifié la provenance et l'intégrité du paquet. Pour une distribution publique, configurez une signature Developer ID Installer et la notarisation Apple.
+- Un Mac de bureau endormi/éteint ou déconnecté du réseau ne fournit pas un hôte Home Assistant disponible en continu.
 
-### Performance
-- **Apple Silicon**: Performance native maximale
-- **Intel Mac**: Performance excellente avec traduction matérielle
-- **Overhead**: Minimal (~5-10% en conditions normales)
+## Validation recommandée avant publication
 
-## Installation Testée
-
-### Environnements Validés
-- ✅ macOS 15.0+ (Sequoia) - Apple Silicon
-- ✅ macOS 14.0+ (Sonoma) - Apple Silicon  
-- ✅ macOS 13.0+ (Ventura) - Apple Silicon
-- ✅ macOS 12.0+ (Monterey) - Apple Silicon
-- ⚠️ macOS 12.0+ (Monterey) - Intel (via Rosetta 2)
-
-### Processus d'Installation
-1. **Téléchargement**: Package .pkg (53.3 MB)
-2. **Installation**: `sudo installer -pkg HomeAssistant-macos.pkg -target /`
-3. **Configuration**: Automatique via scripts post-installation
-4. **Démarrage**: LaunchDaemon système
-
-## Recommandations
-
-### Pour Apple Silicon
-- Installation native recommandée
-- Performance optimale garantie
-- Compatible avec toutes les fonctionnalités macOS
-
-### Pour Intel Mac
-- Installation via Rosetta 2 automatique
-- Performance très bonne
-- Toutes les fonctionnalités accessibles
-
-## Limitations Connues
-
-### Dépendances Multi-Architecture
-Certaines dépendances Python ne sont pas disponibles en format Universal 2 :
-- SQLAlchemy extensions
-- Certaines bibliothèques natives
-- Modules Bluetooth spécifiques
-
-### Solution Alternative
-Un package Universal 2 complet nécessiterait :
-- Compilation croisée sur les deux architectures
-- Gestion complexe des dépendances
-- Augmentation significative de la taille (~100MB)
-
-## Conclusion
-
-Le package actuel offre une excellente compatibilité :
-- **Apple Silicon**: Support natif optimal
-- **Intel Mac**: Support transparent via Rosetta 2
-- **Installation**: Processus unifié et simple
-- **Performance**: Excellente sur toutes les plateformes
-
-L'approche actuelle (ARM64 + Rosetta 2) est la solution la plus pragmatique offrant le meilleur rapport taille/performance/compatibilité.
+Construire et installer sur macOS 13+ (Intel et Apple Silicon séparément), vérifier le démarrage via `launchctl`, ouvrir l'interface sur le port 8123, puis valider les journaux et la conservation de la configuration après mise à niveau. Aucune de ces plateformes n'est déclarée « testée » sans exécution réelle.

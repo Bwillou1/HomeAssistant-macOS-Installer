@@ -1,118 +1,76 @@
 #!/bin/bash
 set -euo pipefail
 
-HA_CONFIG_DIR="/Library/Application Support/HomeAssistant"
-HA_LOG_DIR="/Library/Logs/HomeAssistant"
-HA_CONFIG_FILE="$HA_CONFIG_DIR/config/configuration.yaml"
-HA_BIN_PATH="/opt/homeassistant/bin/hass"
-LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
-USER_NAME="_homeassistant"
-GROUP_NAME="_homeassistant"
+readonly HA_ROOT="/opt/homeassistant"
+readonly HA_VENV="$HA_ROOT/venv"
+readonly HA_CONFIG_DIR="/Library/Application Support/HomeAssistant"
+readonly HA_CONFIG_FILE="$HA_CONFIG_DIR/config/configuration.yaml"
+readonly HA_LOG_DIR="/Library/Logs/HomeAssistant"
+readonly UPDATER_LOG_DIR="/Library/Logs/HomeAssistant-Installer"
+readonly LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
+readonly UPDATER_PLIST="/Library/LaunchDaemons/org.homeassistant.updater.plist"
+readonly USER_NAME="_homeassistant"
+readonly GROUP_NAME="_homeassistant"
+readonly SERVICE_LABEL="system/org.homeassistant.daemon"
 
-echo "[INFO] Configuring Home Assistant Desktop for macOS (vVERSION_PLACEHOLDER)" >&2
+log() { echo "[HomeAssistant installer] $*" >&2; }
+fail() { log "ERROR: $*"; exit 1; }
 
-mkdir -p "$HA_CONFIG_DIR/config"
-mkdir -p "$HA_LOG_DIR"
+log "Configuring Home Assistant (installer vVERSION_PLACEHOLDER)"
 
-# Assign permissions to the new system user
-chown -R $USER_NAME:$GROUP_NAME "$HA_CONFIG_DIR" "$HA_LOG_DIR"
-chmod -R 755 "$HA_CONFIG_DIR" "$HA_LOG_DIR"
-
-# Permissions on the /opt installation
-if [ -d "/opt/homeassistant" ]; then
-    chown -R $USER_NAME:$GROUP_NAME "/opt/homeassistant"
-    chmod -R 755 "/opt/homeassistant"
+if [[ ! -x /opt/homebrew/bin/ffmpeg && ! -x /usr/local/bin/ffmpeg ]]; then
+  log "WARNING: ffmpeg is not installed. Integrations that need transcoding may not work; install it with Homebrew (brew install ffmpeg)."
 fi
 
-if [ ! -x "$HA_BIN_PATH" ]; then
-  echo "[ERROR] Binary missing or not executable: $HA_BIN_PATH" >&2
-  exit 1
-fi
+id "$USER_NAME" >/dev/null 2>&1 || fail "Service account $USER_NAME does not exist"
+[[ -x "$HA_VENV/bin/hass" ]] || fail "Home Assistant executable is missing: $HA_VENV/bin/hass"
+[[ -x "$HA_VENV/bin/python" ]] || fail "Bundled Python interpreter is missing or broken"
+"$HA_VENV/bin/python" --version >&2 || fail "Bundled Python runtime cannot start on this Mac"
+[[ -f "$LAUNCHD_PLIST" ]] || fail "LaunchDaemon plist is missing: $LAUNCHD_PLIST"
+[[ -f "$UPDATER_PLIST" ]] || fail "Updater LaunchDaemon plist is missing: $UPDATER_PLIST"
 
-if [ ! -f "$LAUNCHD_PLIST" ]; then
-  echo "[ERROR] LaunchDaemon missing: $LAUNCHD_PLIST" >&2
-  exit 1
-fi
+# Ensure the daemon's immutable application files cannot be changed by the
+# service account. Only configuration and logs are writable by that account.
+chown -R root:wheel "$HA_ROOT"
+chmod -R go-w "$HA_ROOT"
 
-# Do not overwrite existing user config
-if [ ! -f "$HA_CONFIG_FILE" ]; then
-# Detect system settings for default config
-SYS_COUNTRY=$(defaults read .GlobalPreferences AppleLocale | cut -d'_' -f2 | cut -d'@' -f1 || echo "US")
-SYS_LANG=$(defaults read .GlobalPreferences AppleLocale | cut -d'_' -f1 || echo "en")
-SYS_TZ=$(sudo systemsetup -gettimezone | awk '{print $3}' || echo "UTC")
+mkdir -p "$HA_CONFIG_DIR/config" "$HA_LOG_DIR" "$UPDATER_LOG_DIR"
+chown root:wheel "$UPDATER_LOG_DIR"
+chmod 750 "$UPDATER_LOG_DIR"
+chown -R "$USER_NAME:$GROUP_NAME" "$HA_CONFIG_DIR" "$HA_LOG_DIR"
+find "$HA_CONFIG_DIR" -type d -exec chmod 750 {} +
+find "$HA_CONFIG_DIR" -type f -exec chmod 640 {} +
+find "$HA_LOG_DIR" -type d -exec chmod 750 {} +
+find "$HA_LOG_DIR" -type f -exec chmod 640 {} +
 
-cat > "$HA_CONFIG_FILE" << EOF
-# Home Assistant Configuration
-homeassistant:
-  name: Home Assistant
-  country: $SYS_COUNTRY
-  language: $SYS_LANG
-  time_zone: $SYS_TZ
-
+# Never overwrite or silently modify an existing user configuration.
+if [[ ! -e "$HA_CONFIG_FILE" ]]; then
+  cat > "$HA_CONFIG_FILE" <<'YAML'
+# Minimal Home Assistant configuration. Finish setup at http://localhost:8123.
 default_config:
-
-logger:
-  default: info
-  logs:
-    homeassistant.components: debug
-
-# Empty defaults keep Home Assistant's core script/automation setup happy.
-automation: []
-script: {}
-
-# Network Discovery
-discovery:
-EOF
+YAML
+  chown "$USER_NAME:$GROUP_NAME" "$HA_CONFIG_FILE"
+  chmod 640 "$HA_CONFIG_FILE"
 fi
 
-if ! grep -q '^automation:' "$HA_CONFIG_FILE"; then
-cat >> "$HA_CONFIG_FILE" << 'EOF'
-
-automation: []
-EOF
+# A bad YAML file should not result in an endless launchd crash/restart loop.
+# Run the built-in configuration check as the same unprivileged account as HA.
+if ! sudo -u "$USER_NAME" "$HA_VENV/bin/hass" --script check_config --config "$HA_CONFIG_DIR/config"; then
+  fail "Home Assistant configuration check failed; service was not started. Fix $HA_CONFIG_FILE and run: sudo launchctl bootstrap system $LAUNCHD_PLIST"
 fi
 
-if ! grep -q '^script:' "$HA_CONFIG_FILE"; then
-cat >> "$HA_CONFIG_FILE" << 'EOF'
-
-script: {}
-EOF
-fi
-
-chown -R $USER_NAME:$GROUP_NAME "$HA_CONFIG_DIR"
-chmod 640 "$HA_CONFIG_FILE"
-
-# Remove lock file in case of aborted previous start or permission issues
 rm -f "$HA_CONFIG_DIR/config/.ha_run.lock"
+chown root:wheel "$LAUNCHD_PLIST" "$UPDATER_PLIST"
+chmod 644 "$LAUNCHD_PLIST" "$UPDATER_PLIST"
 
-# Configure LaunchDaemon permissions
-# Bootout BEFORE modifying permissions to avoid phantom state (bug 5: Input/output error)
+launchctl bootout system "$UPDATER_PLIST" >/dev/null 2>&1 || true
 launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
-launchctl bootout system/org.homeassistant.daemon >/dev/null 2>&1 || true
+launchctl bootout "$SERVICE_LABEL" >/dev/null 2>&1 || true
+launchctl enable "$SERVICE_LABEL"
+launchctl bootstrap system "$LAUNCHD_PLIST"
+launchctl enable system/org.homeassistant.updater
+launchctl bootstrap system "$UPDATER_PLIST"
 
-chown root:wheel "$LAUNCHD_PLIST"
-chmod 644 "$LAUNCHD_PLIST"
-
-# Reload and attempt to start service without blocking installation
-if ! launchctl bootstrap system "$LAUNCHD_PLIST" >/dev/null 2>&1; then
-  echo "[WARN] Service did not start automatically. Start it manually with launchctl." >&2
-else
-  launchctl enable system/org.homeassistant.daemon >/dev/null 2>&1 || true
-  launchctl kickstart -k system/org.homeassistant.daemon >/dev/null 2>&1 || true
-fi
-
-sleep 1
-
-if [ -f "$HA_BIN_PATH" ] && [ -f "$LAUNCHD_PLIST" ] && [ -f "$HA_CONFIG_FILE" ]; then
-    echo "[INFO] Installation successful" >&2
-    echo "[INFO] Web interface: http://localhost:8123" >&2
-    
-    # macOS Notification
-    osascript -e 'display notification "Home Assistant is starting up" with title "Home Assistant Desktop" subtitle "Web interface: http://localhost:8123"' 2>/dev/null || true
-    
-else
-    echo "[ERROR] Installation incomplete" >&2
-    exit 1
-fi
-
-exit 0
+log "Installation completed. Home Assistant is starting; open http://localhost:8123 after startup."
+log "Configuration: $HA_CONFIG_DIR/config"
+log "Logs: $HA_LOG_DIR"

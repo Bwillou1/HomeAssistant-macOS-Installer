@@ -1,47 +1,22 @@
 #!/bin/bash
-# Script de signature code pour Home Assistant Desktop macOS
-# Nécessite un certificat développeur Apple valide
+# Sign the generated installer package. Run on macOS with an Installer certificate.
+set -euo pipefail
 
-set -e
-
-# Configuration
-PKG_PATH="dist/HomeAssistant-macos.pkg"
-SIGNED_PKG_PATH="dist/HomeAssistant-macos-signed.pkg"
+VERSION=$(cat VERSION)
+PKG_PATH="${PKG_PATH:-dist/HomeAssistant-macOS-${VERSION}.pkg}"
+SIGNED_PKG_PATH="${PKG_PATH%.pkg}-signed.pkg"
 DEVELOPER_ID="${DEVELOPER_ID:-}"
 
-# Vérification du certificat
-if [ -z "$DEVELOPER_ID" ]; then
-    echo "❌ Aucun certificat développeur spécifié"
-    echo "Usage: DEVELOPER_ID='Developer ID Installer: Votre Nom' ./scripts/sign.sh"
-    exit 1
+if [[ -z "$DEVELOPER_ID" ]]; then
+  echo "Set DEVELOPER_ID to the exact 'Developer ID Installer: …' certificate name." >&2
+  exit 2
+fi
+if [[ ! -f "$PKG_PATH" ]]; then
+  echo "Package not found: $PKG_PATH (run make package first)." >&2
+  exit 1
 fi
 
-# Vérification du package
-if [ ! -f "$PKG_PATH" ]; then
-    echo "❌ Package non trouvé: $PKG_PATH"
-    echo "Exécutez d'abord: python3 create_web_pkg.py"
-    exit 1
-fi
-
-echo "🔐 Signature du package avec: $DEVELOPER_ID"
-
-# Signature du package
-productsign \
-    --sign "$DEVELOPER_ID" \
-    "$PKG_PATH" \
-    "$SIGNED_PKG_PATH"
-
-if [ $? -eq 0 ]; then
-    echo "✅ Package signé avec succès: $SIGNED_PKG_PATH"
-    
-    # Vérification de la signature
-    echo "🔍 Vérification de la signature..."
-    spctl -a -v "$SIGNED_PKG_PATH"
-    
-    # Remplacement du package original
-    mv "$SIGNED_PKG_PATH" "$PKG_PATH"
-    echo "✅ Package signé et prêt pour la notarisation"
-else
-    echo "❌ Échec de la signature"
-    exit 1
-fi
+productsign --sign "$DEVELOPER_ID" "$PKG_PATH" "$SIGNED_PKG_PATH"
+pkgutil --check-signature "$SIGNED_PKG_PATH"
+mv -f "$SIGNED_PKG_PATH" "$PKG_PATH"
+echo "Signed package: $PKG_PATH"

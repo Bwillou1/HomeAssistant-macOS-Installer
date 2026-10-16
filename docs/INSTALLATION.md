@@ -1,277 +1,47 @@
-# Home Assistant Desktop for macOS - Guide d'Installation
+# Installation macOS
 
-## Vue d'ensemble
+## Téléchargement et Gatekeeper
 
-Home Assistant Desktop for macOS est une application native qui transforme votre Mac en un hôte Home Assistant de niveau production, avec une intégration système complète et des performances optimisées.
+Téléchargez le fichier `.pkg` correspondant à l'architecture de votre Mac (`arm64` pour Apple Silicon ou `x86_64` pour Intel) depuis les [releases de ce dépôt](https://github.com/Bwillou1/HomeAssistant-macOS-Installer/releases). Le paquet refuse l'installation sur la mauvaise architecture ou une version de macOS antérieure à 13.0. Le paquet actuel n'est pas signé/notarié par défaut; macOS peut le refuser. Ne désactivez pas Gatekeeper globalement. N'installez le paquet que si vous faites confiance à sa source et, idéalement, vérifiez son empreinte publiée. Une distribution signée requiert un certificat Apple Developer ID Installer et une notarisation.
 
-## Configuration Requise
+Installez ensuite le paquet avec l'installateur macOS (ou `sudo installer -pkg HomeAssistant-macOS-*.pkg -target /`). Le service utilise `/opt/homeassistant`, la configuration `/Library/Application Support/HomeAssistant/config` et les journaux `/Library/Logs/HomeAssistant`.
 
-### Système
-- **macOS** : 12.0+ (Monterey ou supérieur)
-- **Architecture** : Intel x86_64 ou Apple Silicon M1/M2/M3
-- **Mémoire** : 4GB minimum (8GB recommandés)
-- **Stockage** : 2GB espace disponible
-- **Permissions** : Administrateur requis
+Ouvrez `http://localhost:8123` pour terminer la configuration initiale. Le premier démarrage peut prendre plusieurs minutes. Pour les intégrations qui utilisent le transcodage, installez aussi FFmpeg sur le Mac hôte (`brew install ffmpeg`); FFmpeg n'est pas inclus dans le paquet.
 
-### Réseau
-- Accès réseau local pour la découverte d'appareils
-- Port 8123 disponible pour l'interface web
-- Accès Bluetooth pour les appareils IoT
+## Service et journaux
 
-## Méthodes d'Installation
-
-### 1. Installation via Package .pkg (Recommandé)
-
-```bash
-# Téléchargement du package
-wget https://github.com/homeassistant/homeassistant-macos/releases/latest/download/HomeAssistant-macOS.pkg
-
-# Installation
-sudo installer -pkg HomeAssistant-macOS.pkg -target /
+```sh
+sudo launchctl print system/org.homeassistant.daemon
+sudo launchctl kickstart -k system/org.homeassistant.daemon
+sudo launchctl bootout system /Library/LaunchDaemons/org.homeassistant.daemon.plist
+ tail -f /Library/Logs/HomeAssistant/daemon.error.log
 ```
 
-### 2. Installation depuis les Sources
-
-```bash
-# Clonage du dépôt
-git clone https://github.com/homeassistant/homeassistant-macos.git
-cd homeassistant-macos
-
-# Build et installation
-make all
-sudo make install
-```
-
-### 3. Installation Manuelle
-
-```bash
-# Installation dépendances
-pip3 install -r requirements.txt
-
-# Build binaire
-pyinstaller --onefile --target-arch universal2 src/main.py
-
-# Copie des fichiers
-sudo cp dist/main /usr/local/bin/homeassistant-macos
-sudo cp launchd/org.homeassistant.daemon.plist /Library/LaunchDaemons/
-sudo launchctl load -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-```
-
-## Processus d'Installation
-
-### 1. Vérification Système
-L'installateur vérifie automatiquement :
-- Version de macOS (12.0+ requis)
-- Architecture supportée (Intel/Apple Silicon)
-- Espace disque disponible (2GB+)
-- Permissions administrateur
-
-### 2. Installation des Composants
-- **Binaire Universal 2** : `/usr/local/bin/homeassistant-macos`
-- **LaunchDaemon** : `/Library/LaunchDaemons/org.homeassistant.daemon.plist`
-- **Configuration** : `/Library/Application Support/HomeAssistant/`
-- **Logs** : `/Library/Logs/HomeAssistant/`
-
-### 3. Configuration des Permissions
-L'installateur configure automatiquement :
-- **Permissions TCC** : Bluetooth et LocalNetwork
-- **Firewall** : Règles pour mDNS (port 5353 UDP)
-- **Sandbox** : Profil de sécurité restrictif
-- **Bonjour** : Service de découverte réseau
-
-### 4. Démarrage du Service
-Le service démarre automatiquement après l'installation :
-- **Interface Web** : http://localhost:8123
-- **Découverte** : homeassistant.local (Bonjour)
-- **Logs** : `/Library/Logs/HomeAssistant/daemon.log`
-
-## Configuration Post-Installation
-
-### Accès à l'Interface
-
-1. Ouvrez votre navigateur web
-2. Naviguez vers `http://localhost:8123`
-3. Créez votre compte utilisateur
-4. Configurez vos intégrations
-
-### Fichiers de Configuration
-
-- **Configuration principale** : `/Library/Application Support/HomeAssistant/config/configuration.yaml`
-- **Personnalisation** : `/Library/Application Support/HomeAssistant/config/custom_components/`
-- **Automatisations** : `/Library/Application Support/HomeAssistant/config/automations.yaml`
-- **Scènes** : `/Library/Application Support/HomeAssistant/config/scenes.yaml`
-
-### Intégrations macOS
-
-L'installation inclut les intégrations natives :
-- **Capteurs système** : CPU, mémoire, disque, réseau
-- **Bluetooth** : Appareils IoT Bluetooth
-- **Bonjour** : Découverte automatique réseau
-- **Notifications** : Notifications système macOS
-
-## Gestion du Service
-
-### Démarrage/Arrêt
-
-```bash
-# Démarrer le service
-sudo launchctl load -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-
-# Arrêter le service
-sudo launchctl unload -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-
-# Redémarrer le service
-sudo launchctl unload -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-sudo launchctl load -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-```
-
-### Vérification du Statut
-
-```bash
-# Vérifier si le service tourne
-sudo launchctl list | grep homeassistant
-
-# Vérifier les processus
-ps aux | grep homeassistant
-
-# Vérifier les ports
-lsof -i :8123
-```
-
-### Logs
-
-```bash
-# Logs en temps réel
-tail -f /Library/Logs/HomeAssistant/daemon.log
-
-# Logs d'erreurs
-tail -f /Library/Logs/HomeAssistant/daemon.error.log
-
-# Logs Home Assistant
-tail -f /Library/Logs/HomeAssistant/home-assistant.log
-```
-
-## Dépannage
-
-### Problèmes Communs
-
-#### Service ne démarre pas
-```bash
-# Vérifier les logs
-sudo cat /Library/Logs/HomeAssistant/daemon.log
-
-# Vérifier les permissions
-sudo launchctl list | grep homeassistant
-
-# Redémarrer manuellement
-sudo /usr/local/bin/homeassistant-macos --debug
-```
-
-#### Permissions refusées
-```bash
-# Réinitialiser les permissions TCC
-sudo tccutil reset All
-
-# Redémarrer pour appliquer les changements
-sudo reboot
-```
-
-#### Accès réseau impossible
-```bash
-# Vérifier le firewall
-sudo pfctl -sr | grep 8123
-
-# Vérifier Bonjour
-dns-sd -B _home-assistant._tcp local.
-```
-
-#### Interface web inaccessible
-```bash
-# Vérifier le port
-netstat -an | grep 8123
-
-# Vérifier la configuration
-cat /Library/Application\ Support/HomeAssistant/config/configuration.yaml
-```
-
-### Mode Debug
-
-```bash
-# Démarrage en mode debug
-sudo /usr/local/bin/homeassistant-macos --debug --log-level debug
-
-# Logs détaillés
-export HASS_DEBUG=1
-sudo /usr/local/bin/homeassistant-macos
-```
-
-## Mise à Jour
-
-### Automatique
-Home Assistant Desktop se met à jour automatiquement :
-- Vérification quotidienne des mises à jour
-- Téléchargement et installation silencieuse
-- Redémarrage automatique du service
-
-### Manuelle
-```bash
-# Arrêt du service
-sudo launchctl unload -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-
-# Téléchargement et installation du nouveau package
-sudo installer -pkg HomeAssistant-macOS-new.pkg -target /
-
-# Redémarrage
-sudo launchctl load -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
-```
+Le LaunchDaemon est chargé automatiquement à l'installation. La configuration existante n'est pas remplacée lors d'une mise à niveau.
 
 ## Désinstallation
 
-### Automatique
-```bash
-# Script de désinstallation inclus
-sudo /Library/Application\ Support/HomeAssistant/scripts/uninstall
+```sh
+sudo /opt/homeassistant/uninstall --keep-config
 ```
 
-### Manuelle
-```bash
-# Arrêt du service
-sudo launchctl unload -w /Library/LaunchDaemons/org.homeassistant.daemon.plist
+Par défaut, le script préserve configuration et journaux. Pour les supprimer, utilisez `--remove-config` et confirmez en saisissant `REMOVE`. En mode automatisé, `--remove-config --non-interactive` rend cette suppression explicite sans prompt. Le compte système restreint est conservé pour éviter de supprimer un compte préexistant portant le même nom.
 
-# Suppression des fichiers
-sudo rm -f /usr/local/bin/homeassistant-macos
-sudo rm -f /Library/LaunchDaemons/org.homeassistant.daemon.plist
-sudo rm -rf /Library/Application\ Support/HomeAssistant
-sudo rm -rf /Library/Logs/HomeAssistant
-```
+## Mise à jour de Core
 
-## Sécurité
+Un LaunchDaemon vérifie chaque jour à 04 h 30 (heure locale, Mac éveillé et connecté) la dernière version stable de Home Assistant Core publiée sur PyPI. Il prépare une nouvelle venv séparée, vérifie la configuration, sauvegarde `config` (y compris `.storage` et la base SQLite), puis bascule le service; si le service ne répond pas, l'ancienne venv est restaurée. Les sauvegardes locales sont stockées dans `/Library/Application Support/HomeAssistant-Backups` et conservées 30 jours. Elles ne remplacent pas une sauvegarde hors du Mac.
 
-### Signatures et Notarisation
-- **Signature Code** : Certificat développeur Apple
-- **Notarisation** : Vérification par Apple
-- **Sandbox** : Isolation des processus
-- **Permissions** : Contrôle d'accès granulaire
+Pour lancer la mise à jour immédiatement: `sudo /opt/homeassistant/update`. Journaux: `/Library/Logs/HomeAssistant-Installer/updater.log` et `updater.error.log`. Pour désactiver l'automatisation: `sudo launchctl disable system/org.homeassistant.updater && sudo launchctl bootout system/org.homeassistant.updater`; pour la réactiver: `sudo launchctl enable system/org.homeassistant.updater && sudo launchctl bootstrap system /Library/LaunchDaemons/org.homeassistant.updater.plist`.
 
-### Réseau
-- **mDNS** : Découverte locale sécurisée
-- **HTTPS** : Support SSL/TLS
-- **Firewall** : Règles restrictives
-- **VPN** : Compatible avec les VPN
+La mise à jour nécessite Internet et le Python embarqué. Si une future version exige une version de Python plus récente, le processus échoue sans remplacer la version installée; il faudra installer une nouvelle version du paquet. Les mises à jour dynamiques depuis PyPI comportent un risque résiduel malgré le contrôle de configuration, la sauvegarde et le retour arrière. Home Assistant Core natif n'est pas une méthode officiellement prise en charge.
 
-## Support
+Pour mettre à jour le runtime Python ou le contenu du paquet lui-même, installez un nouveau `.pkg` par-dessus l'installation existante; les données dans `/Library/Application Support/HomeAssistant` sont conservées.
 
-### Documentation Complète
-- [Documentation officielle](https://www.home-assistant.io)
-- [Intégrations macOS](https://www.home-assistant.io/integrations/)
-- [Communauté](https://community.home-assistant.io/)
+## Dépannage
 
-### Rapports de Bugs
-- [Issues GitHub](https://github.com/homeassistant/homeassistant-macos/issues)
-- Logs requis : `/Library/Logs/HomeAssistant/`
-- Informations système : `sw_vers && uname -a`
+- Statut: `sudo launchctl print system/org.homeassistant.daemon`
+- Sortie du service: `/Library/Logs/HomeAssistant/daemon.log` et `daemon.error.log`
+- Journal Home Assistant: `/Library/Logs/HomeAssistant/home-assistant.log`
+- Si le service ne démarre pas, vérifiez la configuration YAML et les permissions, puis redémarrez avec `launchctl kickstart`.
 
-### Communauté
-- [Discord Home Assistant](https://discord.gg/homeassistant)
-- [Forum](https://community.home-assistant.io/)
-- [Reddit](https://reddit.com/r/homeassistant)
+Le service limité à un compte système peut ne pas avoir accès aux périphériques Bluetooth/USB ou aux autorisations TCC d'une session utilisateur macOS. Ce n'est pas automatiquement résolu par l'installation.
