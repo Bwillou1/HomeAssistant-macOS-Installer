@@ -2,6 +2,7 @@
 # Transactional daily/manual update to the newest stable Home Assistant Core.
 # This updates Core in the venv; it does NOT install or update Home Assistant OS.
 set -euo pipefail
+umask 027
 
 readonly ROOT="/opt/homeassistant"
 readonly ENV="$ROOT/venv"

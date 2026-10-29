@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+umask 027
 
 readonly LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
 readonly USER_NAME="_homeassistant"
@@ -44,9 +45,14 @@ if ! dscl . -read "/Users/$USER_NAME" >/dev/null 2>&1; then
   dscl . -create "/Users/$USER_NAME" RealName "Home Assistant Service"
   dscl . -create "/Users/$USER_NAME" RecordName "$USER_NAME"
   dscl . -create "/Users/$USER_NAME" IsHidden 1
+  dscl . -create "/Users/$USER_NAME" Password "*"
+  dscl . -create "/Users/$USER_NAME" AuthenticationAuthority ";DisabledTags;none"
 else
   existing_gid=$(dscl . -read "/Users/$USER_NAME" PrimaryGroupID | awk '{print $2}')
   [[ "$existing_gid" == "$gid" ]] || fail "Existing $USER_NAME account has unexpected primary group ID"
+  dscl . -create "/Users/$USER_NAME" UserShell /usr/bin/false
+  dscl . -create "/Users/$USER_NAME" Password "*"
+  dscl . -create "/Users/$USER_NAME" IsHidden 1
 fi
 
 # Stop only this installer’s LaunchDaemons before replacing their payloads.

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+umask 027
 
 readonly HA_ROOT="/opt/homeassistant"
 readonly HA_VENV="$HA_ROOT/venv"

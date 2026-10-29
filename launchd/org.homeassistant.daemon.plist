@@ -31,6 +31,9 @@
     <key>ThrottleInterval</key>
     <integer>30</integer>
 
+    <key>Umask</key>
+    <integer>23</integer>
+
     <key>ProcessType</key>
     <string>Background</string>
 
