@@ -16,7 +16,17 @@
                 my.result.type = 'Fatal';
                 return false;
             }
-            if (system.hardware.architecture != 'ARCH_PLACEHOLDER') {
+            var arch = '';
+            try {
+                if (typeof system.sysctl === 'function') {
+                    arch = system.sysctl('hw.machine');
+                } else if (typeof system.hardware !== 'undefined' && system.hardware && system.hardware.architecture) {
+                    arch = system.hardware.architecture;
+                }
+            } catch (e) {
+                arch = '';
+            }
+            if (arch && arch != 'ARCH_PLACEHOLDER') {
                 my.result.title = 'Wrong architecture package';
                 my.result.message = 'This package was built for ARCH_PLACEHOLDER. Download the package for this Mac architecture.';
                 my.result.type = 'Fatal';

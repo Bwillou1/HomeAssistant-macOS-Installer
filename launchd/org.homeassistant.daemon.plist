@@ -55,6 +55,10 @@
         <string>/opt/homeassistant/venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
         <key>FFMPEG_HWACCEL</key>
         <string>videotoolbox</string>
+        <key>HOME</key>
+        <string>/Library/Application Support/HomeAssistant</string>
+        <key>UV_CACHE_DIR</key>
+        <string>/Library/Application Support/HomeAssistant/.cache/uv</string>
     </dict>
 
     <key>SoftResourceLimits</key>

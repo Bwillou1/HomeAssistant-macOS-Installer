@@ -30,10 +30,12 @@ id "$USER_NAME" >/dev/null 2>&1 || fail "Service account $USER_NAME does not exi
 [[ -f "$LAUNCHD_PLIST" ]] || fail "LaunchDaemon plist is missing: $LAUNCHD_PLIST"
 [[ -f "$UPDATER_PLIST" ]] || fail "Updater LaunchDaemon plist is missing: $UPDATER_PLIST"
 
-# Ensure the daemon's immutable application files cannot be changed by the
-# service account. Only configuration and logs are writable by that account.
+# Ensure the base application files cannot be changed by the service account,
+# while the service account owns its virtual environment to install runtime integration dependencies.
 chown -R root:wheel "$HA_ROOT"
 chmod -R go-w "$HA_ROOT"
+chown -R "$USER_NAME:$GROUP_NAME" "$HA_VENV"
+chmod -R u+w "$HA_VENV"
 
 mkdir -p "$HA_CONFIG_DIR/config" "$HA_LOG_DIR" "$UPDATER_LOG_DIR"
 chown root:wheel "$UPDATER_LOG_DIR"
@@ -56,7 +58,7 @@ fi
 
 # A bad YAML file should not result in an endless launchd crash/restart loop.
 # Run the built-in configuration check as the same unprivileged account as HA.
-if ! sudo -u "$USER_NAME" "$HA_VENV/bin/hass" --script check_config --config "$HA_CONFIG_DIR/config"; then
+if ! sudo -H -u "$USER_NAME" env HOME="$HA_CONFIG_DIR" UV_CACHE_DIR="$HA_CONFIG_DIR/.cache/uv" "$HA_VENV/bin/hass" --script check_config --config "$HA_CONFIG_DIR/config"; then
   fail "Home Assistant configuration check failed; service was not started. Fix $HA_CONFIG_FILE and run: sudo launchctl bootstrap system $LAUNCHD_PLIST"
 fi
 

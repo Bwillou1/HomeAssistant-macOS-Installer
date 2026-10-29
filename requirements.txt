@@ -1,5 +1,6 @@
 # Exact Home Assistant Core release tested by the project.
 homeassistant==2026.10.2
+colorlog==6.10.1
 
 # Optional macOS frameworks used by selected native integrations.
 pyobjc-framework-CoreBluetooth; sys_platform == "darwin"
