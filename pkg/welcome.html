@@ -1,89 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to Home Assistant Desktop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Assistant Core for macOS</title>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border-color: #d2d2d7;
+            --card-bg: #f5f5f7;
+            --card-border: #e5e5ea;
+            --accent-color: #0288d1;
+            --code-bg: #e8e8ed;
+            --callout-bg: #f2f7fc;
+            --callout-border: #b9d7ea;
+            --callout-text: #1b4965;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: transparent;
+                --text-primary: #f5f5f7;
+                --text-secondary: #a1a1a6;
+                --border-color: #38383a;
+                --card-bg: rgba(255, 255, 255, 0.06);
+                --card-border: rgba(255, 255, 255, 0.12);
+                --accent-color: #38bdf8;
+                --code-bg: rgba(255, 255, 255, 0.12);
+                --callout-bg: rgba(56, 189, 248, 0.08);
+                --callout-border: rgba(56, 189, 248, 0.25);
+                --callout-text: #bae6fd;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
+            padding: 24px 28px;
+            -webkit-font-smoothing: antialiased;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        .logo {
-            font-size: 48px;
+
+        .header {
             margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
         }
+
         h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: 300;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            margin: 0 0 6px 0;
+            color: var(--text-primary);
         }
-        .features {
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            backdrop-filter: blur(10px);
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
         }
-        .feature {
-            margin: 10px 0;
-            font-size: 16px;
+
+        p {
+            margin: 0 0 14px 0;
+            color: var(--text-secondary);
         }
-        .install-info {
-            background: rgba(0,0,0,0.2);
+
+        .summary-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            font-size: 14px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
         }
-        .warning {
-            background: rgba(255,193,7,0.2);
-            border: 1px solid rgba(255,193,7,0.5);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            font-size: 14px;
+
+        .summary-card-title {
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            row-gap: 8px;
+            column-gap: 12px;
+            font-size: 12.5px;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+        }
+
+        code {
+            font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+            font-size: 11.5px;
+            background-color: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+
+        .notice-box {
+            background-color: var(--callout-bg);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: var(--callout-text);
+        }
+
+        .footer-note {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 18px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">🏠</div>
-        <h1>Home Assistant Desktop for macOS</h1>
-        
-        <div class="features">
-            <div class="feature">✨ Automatic installation with zero configuration</div>
-            <div class="feature">🚀 Starts automatically with macOS</div>
-            <div class="feature">🔐 Intelligent permission management</div>
-            <div class="feature">🌐 Web interface accessible on localhost:8123</div>
-            <div class="feature">📱 Compatible with Intel and Apple Silicon</div>
+    <div class="header">
+        <h1>Home Assistant Core</h1>
+        <p class="subtitle">Self-contained, local-first home automation runtime for macOS</p>
+    </div>
+
+    <p>
+        This package installs Home Assistant Core as a dedicated system background service managed by <code>launchd</code>. All dependencies are bundled into an isolated, relocatable runtime without altering your system Python environment.
+    </p>
+
+    <div class="summary-card">
+        <div class="summary-card-title">Installation Layout</div>
+        <div class="detail-grid">
+            <span class="detail-label">Application Path</span>
+            <span class="detail-value"><code>/opt/homeassistant</code></span>
+
+            <span class="detail-label">Configuration</span>
+            <span class="detail-value"><code>/Library/Application Support/HomeAssistant</code></span>
+
+            <span class="detail-label">System Service</span>
+            <span class="detail-value"><code>launchd</code> (unprivileged <code>_homeassistant</code> account)</span>
+
+            <span class="detail-label">Web Interface</span>
+            <span class="detail-value"><code>http://localhost:8123</code></span>
         </div>
-        
-        <div class="install-info">
-            <strong>📋 What will be installed:</strong><br>
-            • Home Assistant environment in /opt/homeassistant/<br>
-            • LaunchDaemon system service<br>
-            • Default configuration<br>
-            • Management scripts
-        </div>
-        
-        <div class="warning">
-            <strong>⚠️ Important:</strong><br>
-            This installation requires administrative privileges to configure the system service. 
-            The installer will ask for your macOS password.
-        </div>
-        
-        <p style="font-size: 14px; opacity: 0.8;">
-            Click "Continue" to proceed with the installation.
-        </p>
+    </div>
+
+    <div class="notice-box">
+        <strong>Administrator privileges required:</strong> macOS will prompt for credentials to configure the dedicated system account and register launch daemons.
+    </div>
+
+    <div class="footer-note">
+        Click Continue to review the license agreement and proceed with installation.
     </div>
 </body>
 </html>

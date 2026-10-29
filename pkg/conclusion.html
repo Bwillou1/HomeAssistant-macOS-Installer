@@ -1,129 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Installation Complete</title>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border-color: #d2d2d7;
+            --card-bg: #f5f5f7;
+            --card-border: #e5e5ea;
+            --accent-color: #0288d1;
+            --code-bg: #e8e8ed;
+            --status-success: #34c759;
+            --callout-bg: #f2f7fc;
+            --callout-border: #b9d7ea;
+            --callout-text: #1b4965;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: transparent;
+                --text-primary: #f5f5f7;
+                --text-secondary: #a1a1a6;
+                --border-color: #38383a;
+                --card-bg: rgba(255, 255, 255, 0.06);
+                --card-border: rgba(255, 255, 255, 0.12);
+                --accent-color: #38bdf8;
+                --code-bg: rgba(255, 255, 255, 0.12);
+                --status-success: #30d158;
+                --callout-bg: rgba(56, 189, 248, 0.08);
+                --callout-border: rgba(56, 189, 248, 0.25);
+                --callout-text: #bae6fd;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
+            padding: 24px 28px;
+            -webkit-font-smoothing: antialiased;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
+
+        .header {
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
         }
-        .success-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--status-success);
+            margin-bottom: 6px;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--status-success);
         }
+
         h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: 300;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            margin: 0 0 6px 0;
+            color: var(--text-primary);
         }
-        .success-box {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.5);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            backdrop-filter: blur(10px);
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
         }
-        .next-steps {
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            backdrop-filter: blur(10px);
-            text-align: left;
-        }
-        .step {
-            margin: 10px 0;
-            font-size: 16px;
-        }
-        .url-box {
-            background: rgba(0,0,0,0.3);
+
+        .access-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 18px;
-            font-weight: bold;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .note {
-            background: rgba(255,193,7,0.2);
-            border: 1px solid rgba(255,193,7,0.5);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
+
+        .access-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .access-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .access-url {
+            font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
             font-size: 14px;
-        }
-        .button {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid white;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
+            font-weight: 600;
+            color: var(--accent-color);
             text-decoration: none;
-            display: inline-block;
-            margin: 10px;
-            font-weight: 500;
-            transition: all 0.3s ease;
         }
-        .button:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
+
+        .access-url:hover {
+            text-decoration: underline;
+        }
+
+        .primary-action {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .primary-action:hover {
+            opacity: 0.92;
+        }
+
+        .instructions-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-heading {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 10px;
+        }
+
+        .command-row {
+            margin-bottom: 8px;
+        }
+
+        .command-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .command-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        pre {
+            margin: 0;
+            padding: 6px 10px;
+            background-color: var(--code-bg);
+            border-radius: 5px;
+            font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+            font-size: 11.5px;
+            color: var(--text-primary);
+            overflow-x: auto;
+        }
+
+        .notice-box {
+            background-color: var(--callout-bg);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--callout-text);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="success-icon">✅</div>
-        <h1>Installation Completed Successfully!</h1>
-        
-        <div class="success-box">
-            <strong>🎉 Home Assistant Desktop is now installed on your Mac!</strong><br>
-            The system service has been configured and will start automatically.
+    <div class="header">
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            <span>Service Configured</span>
         </div>
-        
-        <div class="next-steps">
-            <div class="step">🚀 <strong>Step 1:</strong> Home Assistant starts automatically</div>
-            <div class="step">⏱️ <strong>Step 2:</strong> Wait 30-60 seconds for initialization</div>
-            <div class="step">🌐 <strong>Step 3:</strong> Open your web browser</div>
-            <div class="step">📍 <strong>Step 4:</strong> Access the interface below</div>
+        <h1>Home Assistant is Ready</h1>
+        <p class="subtitle">The background launch daemon has been installed and started.</p>
+    </div>
+
+    <div class="access-card">
+        <div class="access-info">
+            <span class="access-label">Web Interface</span>
+            <a href="http://localhost:8123" target="_blank" class="access-url">http://localhost:8123</a>
         </div>
-        
-        <div class="url-box">
-            http://localhost:8123
+        <a href="http://localhost:8123" target="_blank" class="primary-action">Open Dashboard</a>
+    </div>
+
+    <div class="instructions-card">
+        <div class="card-heading">Management & Diagnostics</div>
+        <div class="command-row">
+            <div class="command-description">Check service status:</div>
+            <pre>sudo launchctl list | grep org.homeassistant.daemon</pre>
         </div>
-        
-        <div class="note">
-            <strong>💡 Pro-Tip:</strong><br>
-            • Home Assistant starts automatically every time you turn on your Mac<br>
-            • The interface remains accessible in the background<br>
-            • No need for terminal or manual configuration
+        <div class="command-row" style="margin-top: 10px;">
+            <div class="command-description">View daemon log:</div>
+            <pre>tail -f "/Library/Logs/HomeAssistant/home-assistant.log"</pre>
         </div>
-        
-        <div style="margin-top: 30px;">
-            <a href="http://localhost:8123" class="button">🌐 Open Home Assistant</a>
-            <a href="#" onclick="window.close()" class="button">✨ Finish</a>
-        </div>
-        
-        <p style="font-size: 12px; opacity: 0.7; margin-top: 30px;">
-            If the interface doesn't open, wait a few minutes and try again.<br>
-            The service is initializing in the background.
-        </p>
+    </div>
+
+    <div class="notice-box">
+        <strong>First start initialisation:</strong> Initial startup prepares component dependencies and may take 30 to 60 seconds before responding on port 8123.
     </div>
 </body>
 </html>
