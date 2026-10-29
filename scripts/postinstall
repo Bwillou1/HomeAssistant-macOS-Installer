@@ -10,6 +10,8 @@ readonly HA_LOG_DIR="/Library/Logs/HomeAssistant"
 readonly UPDATER_LOG_DIR="/Library/Logs/HomeAssistant-Installer"
 readonly LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
 readonly UPDATER_PLIST="/Library/LaunchDaemons/org.homeassistant.updater.plist"
+readonly SUPERVISOR_PLIST="/Library/LaunchDaemons/org.homeassistant.supervisor.plist"
+readonly TOKEN_FILE="$HA_CONFIG_DIR/.supervisor_token"
 readonly USER_NAME="_homeassistant"
 readonly GROUP_NAME="_homeassistant"
 readonly SERVICE_LABEL="system/org.homeassistant.daemon"
@@ -62,9 +64,29 @@ if ! sudo -H -u "$USER_NAME" env HOME="$HA_CONFIG_DIR" UV_CACHE_DIR="$HA_CONFIG_
   fail "Home Assistant configuration check failed; service was not started. Fix $HA_CONFIG_FILE and run: sudo launchctl bootstrap system $LAUNCHD_PLIST"
 fi
 
+if [[ ! -s "$TOKEN_FILE" ]]; then
+  openssl rand -hex 32 > "$TOKEN_FILE"
+fi
+chown "$USER_NAME:$GROUP_NAME" "$TOKEN_FILE"
+chmod 600 "$TOKEN_FILE"
+SUPERVISOR_TOKEN=$(cat "$TOKEN_FILE")
+sed -i '' "s/SUPERVISOR_TOKEN_PLACEHOLDER/$SUPERVISOR_TOKEN/g" "$LAUNCHD_PLIST"
+
+# Symlink ha CLI utility
+mkdir -p /usr/local/bin
+ln -sf /opt/homeassistant/bin/ha /usr/local/bin/ha 2>/dev/null || true
+if [[ -d /opt/homebrew/bin ]]; then
+  ln -sf /opt/homeassistant/bin/ha /opt/homebrew/bin/ha 2>/dev/null || true
+fi
+
 rm -f "$HA_CONFIG_DIR/config/.ha_run.lock"
-chown root:wheel "$LAUNCHD_PLIST" "$UPDATER_PLIST"
-chmod 644 "$LAUNCHD_PLIST" "$UPDATER_PLIST"
+chown root:wheel "$LAUNCHD_PLIST" "$UPDATER_PLIST" "$SUPERVISOR_PLIST"
+chmod 644 "$LAUNCHD_PLIST" "$UPDATER_PLIST" "$SUPERVISOR_PLIST"
+
+launchctl bootout system "$SUPERVISOR_PLIST" >/dev/null 2>&1 || true
+launchctl bootout system/org.homeassistant.supervisor >/dev/null 2>&1 || true
+launchctl enable system/org.homeassistant.supervisor
+launchctl bootstrap system "$SUPERVISOR_PLIST"
 
 launchctl bootout system "$UPDATER_PLIST" >/dev/null 2>&1 || true
 launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true

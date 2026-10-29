@@ -57,8 +57,10 @@ fi
 
 # Stop only this installer’s LaunchDaemons before replacing their payloads.
 launchctl bootout system /Library/LaunchDaemons/org.homeassistant.updater.plist >/dev/null 2>&1 || true
+launchctl bootout system /Library/LaunchDaemons/org.homeassistant.supervisor.plist >/dev/null 2>&1 || true
 launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
 launchctl bootout system/org.homeassistant.daemon >/dev/null 2>&1 || true
+launchctl bootout system/org.homeassistant.supervisor >/dev/null 2>&1 || true
 
 # Preserve existing user configuration. Installation payload only replaces
 # /opt/homeassistant and the service plist; no user data lives there.

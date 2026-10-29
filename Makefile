@@ -49,6 +49,10 @@ package: build
 	install -m 644 THIRD_PARTY_NOTICES.md "$$PKG_TEMP/pkg_root/opt/homeassistant/THIRD_PARTY_NOTICES.md"; \
 	install -m 644 launchd/org.homeassistant.daemon.plist "$$PKG_TEMP/pkg_root/Library/LaunchDaemons/org.homeassistant.daemon.plist"; \
 	install -m 644 launchd/org.homeassistant.updater.plist "$$PKG_TEMP/pkg_root/Library/LaunchDaemons/org.homeassistant.updater.plist"; \
+	install -m 644 launchd/org.homeassistant.supervisor.plist "$$PKG_TEMP/pkg_root/Library/LaunchDaemons/org.homeassistant.supervisor.plist"; \
+	mkdir -p "$$PKG_TEMP/pkg_root/opt/homeassistant/supervisor" "$$PKG_TEMP/pkg_root/opt/homeassistant/bin"; \
+	install -m 755 supervisor/darwin_supervisor.py "$$PKG_TEMP/pkg_root/opt/homeassistant/supervisor/darwin_supervisor.py"; \
+	install -m 755 supervisor/ha_cli.py "$$PKG_TEMP/pkg_root/opt/homeassistant/bin/ha"; \
 	install -m 755 scripts/preinstall "$$PKG_TEMP/scripts/preinstall"; \
 	install -m 755 scripts/postinstall "$$PKG_TEMP/scripts/postinstall"; \
 	for f in "$$PKG_TEMP/scripts/preinstall" "$$PKG_TEMP/scripts/postinstall" "$$PKG_TEMP/pkg_root/opt/homeassistant/uninstall" "$$PKG_TEMP/pkg_root/opt/homeassistant/update" "$$PKG_TEMP/Distribution.xml"; do \
@@ -69,6 +73,9 @@ package: build
 	find "$$PKG_TEMP/expanded" -path '*/opt/homeassistant/relocate_venv.py' -print -quit | grep -q .; \
 	find "$$PKG_TEMP/expanded" -path '*/Library/LaunchDaemons/org.homeassistant.daemon.plist' -print -quit | grep -q .; \
 	find "$$PKG_TEMP/expanded" -path '*/Library/LaunchDaemons/org.homeassistant.updater.plist' -print -quit | grep -q .; \
+	find "$$PKG_TEMP/expanded" -path '*/Library/LaunchDaemons/org.homeassistant.supervisor.plist' -print -quit | grep -q .; \
+	find "$$PKG_TEMP/expanded" -path '*/opt/homeassistant/supervisor/darwin_supervisor.py' -print -quit | grep -q .; \
+	find "$$PKG_TEMP/expanded" -path '*/opt/homeassistant/bin/ha' -print -quit | grep -q .; \
 	echo "Package created and payload verified: $(PKG_FILE)"
 
 install: package

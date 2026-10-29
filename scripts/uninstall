@@ -8,6 +8,7 @@ readonly HA_LOGS="/Library/Logs/HomeAssistant"
 readonly UPDATER_LOGS="/Library/Logs/HomeAssistant-Installer"
 readonly LAUNCHD_PLIST="/Library/LaunchDaemons/org.homeassistant.daemon.plist"
 readonly UPDATER_PLIST="/Library/LaunchDaemons/org.homeassistant.updater.plist"
+readonly SUPERVISOR_PLIST="/Library/LaunchDaemons/org.homeassistant.supervisor.plist"
 readonly SERVICE_LABEL="system/org.homeassistant.daemon"
 
 log() { echo "[HomeAssistant uninstall] $*" >&2; }
@@ -49,15 +50,18 @@ if [[ "$MODE" == "remove" && "$NON_INTERACTIVE" == false ]]; then
 fi
 
 log "Stopping only this Home Assistant LaunchDaemon and updater..."
+launchctl bootout system/org.homeassistant.supervisor >/dev/null 2>&1 || true
+launchctl bootout system "$SUPERVISOR_PLIST" >/dev/null 2>&1 || true
 launchctl bootout system/org.homeassistant.updater >/dev/null 2>&1 || true
 launchctl bootout system "$UPDATER_PLIST" >/dev/null 2>&1 || true
 launchctl bootout "$SERVICE_LABEL" >/dev/null 2>&1 || true
 launchctl bootout system "$LAUNCHD_PLIST" >/dev/null 2>&1 || true
 launchctl disable system/org.homeassistant.updater >/dev/null 2>&1 || true
+launchctl disable system/org.homeassistant.supervisor >/dev/null 2>&1 || true
 
 log "Removing Home Assistant runtime and LaunchDaemons..."
 rm -rf "$HA_ROOT"
-rm -f "$LAUNCHD_PLIST" "$UPDATER_PLIST"
+rm -f "$LAUNCHD_PLIST" "$UPDATER_PLIST" "$SUPERVISOR_PLIST" /usr/local/bin/ha /opt/homebrew/bin/ha
 
 if [[ "$MODE" == "remove" ]]; then
   log "Removing Home Assistant configuration and logs as explicitly requested."

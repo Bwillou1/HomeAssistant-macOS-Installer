@@ -133,6 +133,22 @@ class PackagingContractTests(unittest.TestCase):
             with self.subTest(script=script.name):
                 subprocess.run(["bash", "-n", str(script)], check=True)
 
+    def test_supervisor_daemon_and_cli_contract(self) -> None:
+        with (ROOT / "launchd/org.homeassistant.supervisor.plist").open("rb") as stream:
+            plist = plistlib.load(stream)
+        self.assertEqual(plist["Label"], "org.homeassistant.supervisor")
+        self.assertEqual(plist["UserName"], "root")
+        self.assertTrue(plist["RunAtLoad"])
+        self.assertTrue(plist["KeepAlive"])
+        args = plist["ProgramArguments"]
+        self.assertEqual(args[0], "/opt/homeassistant/venv/bin/python")
+        self.assertEqual(args[1], "/opt/homeassistant/supervisor/darwin_supervisor.py")
+
+        self.assertTrue((ROOT / "supervisor/darwin_supervisor.py").is_file())
+        self.assertTrue((ROOT / "supervisor/ha_cli.py").is_file())
+        self.assertIn("darwin_supervisor.py", (ROOT / "Makefile").read_text())
+        self.assertIn("bin/ha", (ROOT / "Makefile").read_text())
+
 
 if __name__ == "__main__":
     unittest.main()

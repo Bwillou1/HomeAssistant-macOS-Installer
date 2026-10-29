@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>org.homeassistant.supervisor</string>
+
+    <key>UserName</key>
+    <string>root</string>
+
+    <key>GroupName</key>
+    <string>wheel</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homeassistant/venv/bin/python</string>
+        <string>/opt/homeassistant/supervisor/darwin_supervisor.py</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>Umask</key>
+    <integer>23</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>StandardOutPath</key>
+    <string>/Library/Logs/HomeAssistant/supervisor.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Library/Logs/HomeAssistant/supervisor.error.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Library/Application Support/HomeAssistant</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homeassistant/venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Library/Application Support/HomeAssistant</string>
+    </dict>
+</dict>
+</plist>

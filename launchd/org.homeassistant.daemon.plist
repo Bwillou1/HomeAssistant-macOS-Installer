@@ -59,6 +59,10 @@
         <string>/Library/Application Support/HomeAssistant</string>
         <key>UV_CACHE_DIR</key>
         <string>/Library/Application Support/HomeAssistant/.cache/uv</string>
+        <key>SUPERVISOR</key>
+        <string>127.0.0.1:8765</string>
+        <key>SUPERVISOR_TOKEN</key>
+        <string>SUPERVISOR_TOKEN_PLACEHOLDER</string>
     </dict>
 
     <key>SoftResourceLimits</key>
