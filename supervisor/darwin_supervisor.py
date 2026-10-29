@@ -274,6 +274,26 @@ async def supervisor_reload(request: web.Request):
     return web.json_response({"result": "ok", "data": {}})
 
 
+@routes.post("/supervisor/update")
+async def supervisor_update(request: web.Request):
+    # Returning 400 Bad Request raises SupervisorBadRequestError in aiohasupervisor,
+    # which Home Assistant expects during onboarding when supervisor is up to date.
+    return web.json_response(
+        {"result": "error", "message": "No supervisor update available"},
+        status=400,
+    )
+
+
+@routes.post("/supervisor/options")
+async def supervisor_options(request: web.Request):
+    return web.json_response({"result": "ok", "data": {}})
+
+
+@routes.post("/supervisor/repair")
+async def supervisor_repair(request: web.Request):
+    return web.json_response({"result": "ok", "data": {}})
+
+
 # --- CORE / HOME ASSISTANT ---
 
 
@@ -359,6 +379,7 @@ async def core_start(request: web.Request):
     return web.json_response({"result": "ok", "data": {}})
 
 
+@routes.post("/core/check")
 @routes.post("/core/check_config")
 async def core_check_config(request: web.Request):
     _LOGGER.info("Running check_config...")
@@ -374,6 +395,18 @@ async def core_check_config(request: web.Request):
         {"result": "error", "message": result.stderr or result.stdout},
         status=400,
     )
+
+
+@routes.post("/core/options")
+@routes.post("/homeassistant/options")
+async def core_options(request: web.Request):
+    return web.json_response({"result": "ok", "data": {}})
+
+
+@routes.post("/core/rebuild")
+@routes.post("/homeassistant/rebuild")
+async def core_rebuild(request: web.Request):
+    return web.json_response({"result": "ok", "data": {}})
 
 
 @routes.post("/core/update")
@@ -567,7 +600,13 @@ async def addons_list(request: web.Request):
                 "icon": True,
                 "logo": False,
                 "repository": "local-darwin",
-                "web_ui": meta["web_ui"],
+                "available": True,
+                "stage": "stable",
+                "advanced": False,
+                "build": False,
+                "url": None,
+                "homeassistant": "2026.10.0",
+                "detached": False,
             })
     return web.json_response({"result": "ok", "data": {"addons": installed}})
 
@@ -575,20 +614,27 @@ async def addons_list(request: web.Request):
 @routes.get("/store")
 async def store_info(request: web.Request):
     addons = []
+    state = get_addons_state()
     for slug, meta in AVAILABLE_ADDONS.items():
         addons.append({
             "name": meta["name"],
             "slug": slug,
             "description": meta["description"],
             "version": meta["version"],
+            "version_latest": meta["version"],
+            "update_available": False,
             "repository": "local-darwin",
             "icon": True,
             "logo": False,
-            "installed": slug in get_addons_state(),
+            "installed": slug in state,
             "available": True,
             "stage": "stable",
             "advanced": False,
+            "build": False,
+            "url": None,
             "homeassistant": "2026.10.0",
+            "arch": ["aarch64", "amd64"],
+            "documentation": False,
         })
     return web.json_response({
         "result": "ok",
@@ -603,6 +649,164 @@ async def store_info(request: web.Request):
                     "url": "https://github.com/rhythmcreative/HomeAssistant-macOS-Installer",
                 }
             ],
+        },
+    })
+
+
+@routes.get("/store/addons")
+async def store_addons(request: web.Request):
+    return await store_info(request)
+
+
+@routes.post("/store/reload")
+async def store_reload(request: web.Request):
+    return web.json_response({"result": "ok", "data": {}})
+
+
+@routes.get("/store/addons/{slug}")
+async def store_addon_detail(request: web.Request):
+    slug = request.match_info["slug"]
+    if slug not in AVAILABLE_ADDONS:
+        return web.json_response({"result": "error", "message": f"Addon {slug} not found"}, status=404)
+    meta = AVAILABLE_ADDONS[slug]
+    state = get_addons_state()
+    return web.json_response({
+        "result": "ok",
+        "data": {
+            "name": meta["name"],
+            "slug": slug,
+            "description": meta["description"],
+            "version": meta["version"],
+            "version_latest": meta["version"],
+            "update_available": False,
+            "repository": "local-darwin",
+            "icon": True,
+            "logo": False,
+            "installed": slug in state,
+            "available": True,
+            "stage": "stable",
+            "advanced": False,
+            "build": False,
+            "url": None,
+            "homeassistant": "2026.10.0",
+            "arch": ["aarch64", "amd64"],
+            "documentation": False,
+            "detached": False,
+            "apparmor": "disable",
+            "auth_api": False,
+            "docker_api": False,
+            "full_access": False,
+            "homeassistant_api": False,
+            "host_network": True,
+            "host_pid": False,
+            "ingress": False,
+            "long_description": None,
+            "rating": 5,
+            "signed": True,
+            "hassio_api": False,
+            "hassio_role": "default",
+        },
+    })
+
+
+@routes.get("/store/addons/{slug}/availability")
+async def store_addon_availability(request: web.Request):
+    slug = request.match_info["slug"]
+    if slug not in AVAILABLE_ADDONS:
+        return web.json_response({"result": "error", "message": f"Addon {slug} not found"}, status=404)
+    return web.json_response({"result": "ok", "data": {}})
+
+
+@routes.get("/store/addons/{slug}/changelog")
+async def store_addon_changelog(request: web.Request):
+    slug = request.match_info["slug"]
+    return web.Response(text=f"Native macOS Add-on {slug} v{AVAILABLE_ADDONS.get(slug, {}).get('version', '1.0.0')}\n- 100% Native Darwin daemon.")
+
+
+@routes.get("/store/addons/{slug}/documentation")
+async def store_addon_documentation(request: web.Request):
+    slug = request.match_info["slug"]
+    return web.Response(text=f"# Native macOS Add-on: {slug}\nRuns natively via launchd without Docker or virtualization.")
+
+
+@routes.get("/addons/{slug}/info")
+async def addon_info(request: web.Request):
+    slug = request.match_info["slug"]
+    if slug not in AVAILABLE_ADDONS:
+        return web.json_response({"result": "error", "message": f"Addon {slug} not found"}, status=404)
+    meta = AVAILABLE_ADDONS[slug]
+    state = get_addons_state()
+    return web.json_response({
+        "result": "ok",
+        "data": {
+            "name": meta["name"],
+            "slug": slug,
+            "description": meta["description"],
+            "version": meta["version"],
+            "version_latest": meta["version"],
+            "update_available": False,
+            "repository": "local-darwin",
+            "icon": True,
+            "logo": False,
+            "available": True,
+            "stage": "stable",
+            "advanced": False,
+            "build": False,
+            "url": None,
+            "homeassistant": "2026.10.0",
+            "arch": ["aarch64", "amd64"],
+            "documentation": False,
+            "detached": False,
+            "apparmor": "disable",
+            "auth_api": False,
+            "docker_api": False,
+            "full_access": False,
+            "homeassistant_api": False,
+            "host_network": True,
+            "host_pid": False,
+            "ingress": False,
+            "long_description": None,
+            "rating": 5,
+            "signed": True,
+            "hassio_api": False,
+            "hassio_role": "default",
+            "state": state.get(slug, {}).get("state", "started"),
+            "hostname": "localhost",
+            "dns": ["1.1.1.1", "8.8.8.8"],
+            "protected": True,
+            "boot": "auto",
+            "boot_config": "auto",
+            "options": {},
+            "schema": None,
+            "machine": ["mac-aarch64"],
+            "network": None,
+            "network_description": None,
+            "host_ipc": False,
+            "host_uts": False,
+            "host_dbus": False,
+            "privileged": [],
+            "changelog": False,
+            "stdin": False,
+            "gpio": False,
+            "usb": False,
+            "uart": False,
+            "kernel_modules": False,
+            "devicetree": False,
+            "udev": False,
+            "video": False,
+            "audio": False,
+            "startup": "services",
+            "services": [],
+            "discovery": [],
+            "translations": {},
+            "webui": meta.get("web_ui"),
+            "ingress_entry": None,
+            "ingress_url": None,
+            "ingress_port": None,
+            "ingress_panel": None,
+            "audio_input": None,
+            "audio_output": None,
+            "auto_update": False,
         },
     })
 

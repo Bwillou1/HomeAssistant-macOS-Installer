@@ -63,6 +63,8 @@
         <string>127.0.0.1:8765</string>
         <key>SUPERVISOR_TOKEN</key>
         <string>SUPERVISOR_TOKEN_PLACEHOLDER</string>
+        <key>SETUP_PORT</key>
+        <string>8123</string>
     </dict>
 
     <key>SoftResourceLimits</key>

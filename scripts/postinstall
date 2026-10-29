@@ -53,6 +53,9 @@ if [[ ! -e "$HA_CONFIG_FILE" ]]; then
   cat > "$HA_CONFIG_FILE" <<'YAML'
 # Minimal Home Assistant configuration. Finish setup at http://localhost:8123.
 default_config:
+
+http:
+  server_port: 8123
 YAML
   chown "$USER_NAME:$GROUP_NAME" "$HA_CONFIG_FILE"
   chmod 640 "$HA_CONFIG_FILE"
