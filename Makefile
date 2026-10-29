@@ -30,9 +30,9 @@ build:
 	mkdir -p "$(HA_ROOT)"
 	UV_PYTHON_INSTALL_DIR="$(CURDIR)/$(HA_PYTHON_DIR)" "$(UV)" python install --managed-python --no-bin "$(PYTHON_VERSION)"
 	BASE_PYTHON="$$(UV_PYTHON_INSTALL_DIR="$(CURDIR)/$(HA_PYTHON_DIR)" "$(UV)" python find --managed-python "$(PYTHON_VERSION)")"; \
-	  "$(UV)" venv --relocatable --python "$$BASE_PYTHON" "$(HA_VENV_DIR)"
+	  "$(UV)" venv --relocatable --clear --python "$$BASE_PYTHON" "$(HA_VENV_DIR)"
 	UV_PYTHON_INSTALL_DIR="$(CURDIR)/$(HA_PYTHON_DIR)" "$(UV)" pip install --python "$(HA_VENV_DIR)/bin/python" --requirement requirements.txt
-	"$(HA_VENV_DIR)/bin/python" -c 'import sys,homeassistant; assert sys.version_info >= (3,14,2); print("Home Assistant",homeassistant.__version__,"on Python",sys.version.split()[0])'
+	"$(HA_VENV_DIR)/bin/python" -c 'import sys; from homeassistant.const import __version__; assert sys.version_info >= (3,14,2); print("Home Assistant", __version__, "on Python", sys.version.split()[0])'
 	$(PYTHON) scripts/relocate_venv.py "$(HA_ROOT)" --prefix /opt/homeassistant
 
 package: build
@@ -40,7 +40,7 @@ package: build
 	@set -euo pipefail; \
 	PKG_TEMP=$$(mktemp -d); \
 	trap 'rm -rf "$$PKG_TEMP"' EXIT; \
-	mkdir -p "$$PKG_TEMP/pkg_root/opt" "$$PKG_TEMP/pkg_root/Library/LaunchDaemons" "$$PKG_TEMP/scripts" "$$PKG_TEMP/resources"; \
+	mkdir -p "$$PKG_TEMP/pkg_root/opt" "$$PKG_TEMP/pkg_root/Library/LaunchDaemons" "$$PKG_TEMP/scripts" "$$PKG_TEMP/resources" "$(DIST_DIR)"; \
 	cp -a "$(HA_ROOT)" "$$PKG_TEMP/pkg_root/opt/"; \
 	install -m 644 pkg/Distribution.xml "$$PKG_TEMP/Distribution.xml"; \
 	install -m 755 scripts/uninstall "$$PKG_TEMP/pkg_root/opt/homeassistant/uninstall"; \
